@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb">
+  <title>Fribagolf Challenge</title>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --text:#151923;
+      --muted:#667085;
+      --line:#d0d5dd;
+      --accent:#2563eb;
+      --good:#16a34a;
+      --warn:#d97706;
+      --danger:#dc2626;
+      --purple:#7c3aed;
+      --shadow:0 2px 10px rgba(16,24,40,.05);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); }
+    .wrap { max-width:760px; margin:0 auto; padding:14px; padding-bottom:90px; }
+    h1 { font-size:24px; margin:8px 0 12px; }
+    h2 { font-size:18px; margin:0 0 10px; }
+    h3 { font-size:16px; margin:8px 0; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; margin:12px 0; box-shadow:var(--shadow); }
+    label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+    input, select, textarea { width:100%; border:1px solid var(--line); border-radius:12px; padding:12px; font-size:16px; background:#fff; color:var(--text); }
+    textarea { min-height:80px; resize:vertical; }
+    button { border:0; border-radius:14px; padding:13px 14px; font-size:16px; font-weight:700; background:#e5e7eb; color:var(--text); cursor:pointer; }
+    button.primary { background:var(--accent); color:#fff; }
+    button.good { background:var(--good); color:#fff; }
+    button.warn { background:var(--warn); color:#fff; }
+    button.danger { background:var(--danger); color:#fff; }
+    button.purple { background:var(--purple); color:#fff; }
+    button.ghost { background:#eef2ff; color:#1d4ed8; }
+    button:active { transform:scale(.99); }
+    .hidden { display:none !important; }
+    .tabs { display:flex; gap:8px; position:sticky; top:0; z-index:5; padding:8px 0; background:var(--bg); }
+    .tabs button { flex:1; padding:10px 8px; font-size:14px; }
+    .tabs button.active { background:var(--accent); color:#fff; }
+    .muted { color:var(--muted); font-size:14px; }
+    .center { text-align:center; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    .navrow { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .scoregrid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+    .scoregrid div { background:#f2f4f7; border-radius:14px; padding:10px; }
+    .scoregrid b { display:block; font-size:22px; }
+    .pill { display:inline-block; padding:5px 9px; border-radius:999px; background:#eef2ff; color:#1d4ed8; font-weight:700; margin:2px; font-size:13px; }
+    .pill.good { background:#dcfce7; color:#166534; }
+    .pill.warn { background:#fef3c7; color:#92400e; }
+    .pill.danger { background:#fee2e2; color:#991b1b; }
+    .pill.purple { background:#ede9fe; color:#5b21b6; }
+    .playerRow { display:grid; grid-template-columns:1.2fr .75fr .75fr auto; gap:8px; align-items:end; margin-top:8px; }
+    .playerLine { display:grid; grid-template-columns:1.2fr .7fr .7fr .7fr; gap:8px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:14px; margin-top:8px; background:#fff; }
+    .playerLine input { padding:10px; text-align:center; }
+    .toggle { display:flex; gap:6px; }
+    .toggle button { flex:1; padding:10px 8px; font-size:13px; }
+    .toggle button.activeSuccess { background:#dcfce7; color:#166534; }
+    .toggle button.activeFail { background:#fee2e2; color:#991b1b; }
+    .challengeCard { min-height:260px; border-radius:24px; padding:22px; background:linear-gradient(145deg,#ffffff,#eff6ff); border:2px solid #bfdbfe; box-shadow:0 18px 40px rgba(16,24,40,.12); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; transition:transform .3s ease; }
+    .challengeCard.shuffling { animation:shuffle .9s ease; }
+    .challengeCard.drawn { animation:flipIn .45s ease; }
+    .challengeIcon { font-size:42px; margin:6px 0; }
+    .challengeTitle { font-size:30px; line-height:1.1; margin:8px 0; }
+    .challengeDesc { font-size:17px; line-height:1.45; margin:8px 0 0; color:#344054; }
+    @keyframes shuffle {
+      0% { transform:rotate(0deg) translateX(0) scale(1); }
+      18% { transform:rotate(5deg) translateX(8px) scale(1.02); }
+      36% { transform:rotate(-6deg) translateX(-8px) scale(1.03); }
+      54% { transform:rotate(4deg) translateX(6px) scale(1.02); }
+      72% { transform:rotate(-3deg) translateX(-5px) scale(1.01); }
+      100% { transform:rotate(0deg) translateX(0) scale(1); }
+    }
+    @keyframes flipIn {
+      0% { transform:rotateY(90deg) scale(.96); opacity:.45; }
+      100% { transform:rotateY(0) scale(1); opacity:1; }
+    }
+    .holeNavRow { display:grid; grid-template-columns:72px 1fr 72px; gap:10px; margin:12px 0; align-items:stretch; }
+    .holeNavRow button { min-height:56px; font-size:20px; }
+    .holeNavRow button:nth-child(2) { font-size:16px; }
+    .holelist { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px; }
+    .holelist button { font-size:13px; padding:8px; font-weight:600; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { border-bottom:1px solid var(--line); padding:9px 6px; text-align:left; vertical-align:top; }
+    th { color:var(--muted); font-weight:700; }
+    .smallbtn { padding:8px 10px; font-size:13px; border-radius:10px; }
+    .message { color:#92400e; background:#fef3c7; border:1px solid #fde68a; padding:10px; border-radius:12px; margin-top:10px; font-weight:700; }
+    .footerbar { position:fixed; left:0; right:0; bottom:0; background:rgba(255,255,255,.94); border-top:1px solid var(--line); padding:10px 14px; backdrop-filter:blur(8px); }
+    .footerinner { max-width:760px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width:560px){
+      .row,.row3 { grid-template-columns:1fr; }
+      .playerRow { grid-template-columns:1fr; }
+      .playerLine { grid-template-columns:1fr; }
+      .scoregrid { grid-template-columns:1fr 1fr 1fr; }
+      .tabs { overflow-x:auto; }
+      .tabs button { min-width:86px; }
+      .challengeTitle { font-size:26px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fribagolf Challenge</h1>
+  <div class="tabs">
+    <button id="tabGame" class="active" onclick="showTab('game')">Peli</button>
+    <button id="tabCourses" onclick="showTab('courses')">Kentät</button>
+    <button id="tabCards" onclick="showTab('cards')">Kortit</button>
+    <button id="tabHistory" onclick="showTab('history')">Historia</button>
+  </div>
+
+  <section id="game">
+    <div class="card" id="startCard">
+      <h2>Uusi peli</h2>
+      <div class="row">
+        <div><label>Päivämäärä</label><input type="date" id="dateInput"></div>
+        <div><label>Kenttä</label><select id="courseSelect"></select></div>
+      </div>
+
+      <div class="card" style="box-shadow:none; margin:12px 0 0;">
+        <h3>Pelaajat</h3>
+        <div id="startPlayers"></div>
+        <button style="width:100%; margin-top:8px" onclick="addStartPlayer()">+ Lisää pelaaja</button>
+      </div>
+
+      <div class="card" style="box-shadow:none; margin:12px 0 0;">
+        <h3>Vaikeustason säätö</h3>
+        <div class="row3">
+          <div><label>Aloitusvaikeus</label><select id="startDifficulty"><option value="1">1 helppo</option><option value="2" selected>2 normaali</option><option value="3">3 haastava</option><option value="4">4 vaikea</option><option value="5">5 legendaarinen</option></select></div>
+          <div><label>Nousuraja</label><input type="number" id="riseLimit" value="1"></div>
+          <div><label>Laskuraja</label><input type="number" id="dropLimit" value="5"></div>
+        </div>
+        <p class="muted">Jos väylän yhteistulos on nousuraja tai parempi, vaikeus nousee. Jos yhteistulos on laskuraja tai huonompi, vaikeus laskee. Muuten vaikeus pysyy samana.</p>
+      </div>
+
+      <button class="primary" style="width:100%; margin-top:12px" onclick="startGame()">Aloita peli</button>
+      <p class="muted">Pienin yhteistulos voittaa. Ratapisteet ja korttipisteet näytetään erikseen.</p>
+    </div>
+
+    <div class="card hidden" id="roundCard">
+      <div class="center">
+        <div class="muted" id="gameCourseName"></div>
+        <h2 id="holeTitle">Väylä</h2>
+        <div>Par <span class="pill" id="holePar">3</span> <span class="pill purple" id="difficultyPill">Vaikeus 2</span></div>
+      </div>
+
+      <div class="scoregrid" style="margin-top:12px">
+        <div><span class="muted">Rata</span><b id="totalCourse">0</b></div>
+        <div><span class="muted">Kortit</span><b id="totalCards">0</b></div>
+        <div><span class="muted">Yht.</span><b id="totalAll">0</b></div>
+      </div>
+
+      <div class="challengeCard" id="challengeCard">
+        <p class="muted">Nosta kortti tälle väylälle.</p>
+      </div>
+
+      <div class="navrow" style="margin-top:12px">
+        <button class="purple" onclick="drawCardForCurrentHole()">Nosta kortti</button>
+        <button onclick="shuffleDeck(true)">Sekoita pakka</button>
+      </div>
+      <div id="deckMessage"></div>
+
+      <div class="card" style="box-shadow:none; margin-top:12px">
+        <h3>Väylän tulokset</h3>
+        <p class="muted">Syötä heitot. Kortti epäonnistui = +1 korttipiste. Onnistui = +0.</p>
+        <div id="playerScores"></div>
+      </div>
+
+      <div class="card" style="box-shadow:none; margin-top:12px">
+        <h3>Vaikeussäännöt kesken pelin</h3>
+        <div class="row3">
+          <div><label>Nykyinen vaikeus</label><select id="currentDifficultyInput" onchange="updateCurrentDifficultyFromInput()"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+          <div><label>Nousuraja</label><input type="number" id="gameRiseLimit" onchange="updateGameSettings()"></div>
+          <div><label>Laskuraja</label><input type="number" id="gameDropLimit" onchange="updateGameSettings()"></div>
+        </div>
+        <p class="muted" id="nextDifficultyHint">Seuraavan väylän vaikeus päivittyy väylän yhteistuloksen perusteella.</p>
+      </div>
+
+      <div class="holeNavRow">
+        <button onclick="prevHole()">←</button>
+        <button onclick="finishHoleAndNext()">Laske & seuraava</button>
+        <button onclick="nextHoleOnly()">→</button>
+      </div>
+      <div class="holelist" id="holeButtons"></div>
+
+      <button class="good" style="width:100%; margin-top:12px" onclick="saveGame()">Tallenna peli</button>
+      <button class="danger" style="width:100%; margin-top:8px" onclick="cancelGame()">Peru peli</button>
+    </div>
+  </section>
+
+  <section id="courses" class="hidden">
+    <div class="card">
+      <h2>Lisää / muokkaa kenttää</h2>
+      <input type="hidden" id="editCourseId">
+      <label>Kentän nimi</label><input id="courseNameInput" placeholder="esim. Mukkula Challenge">
+      <div class="row" style="margin-top:10px">
+        <div><label>Väylien määrä</label><select id="holesCount" onchange="renderParInputs()"><option>9</option><option selected>18</option></select></div>
+        <div><label>Oletus par</label><select id="defaultPar" onchange="fillDefaultPar()"><option>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <div id="parInputs" class="holelist"></div>
+      <button class="primary" style="width:100%; margin-top:12px" onclick="saveCourse()">Tallenna kenttä</button>
+      <button style="width:100%; margin-top:8px" onclick="resetCourseForm()">Tyhjennä lomake</button>
+    </div>
+    <div class="card">
+      <h2>Tallennetut kentät</h2>
+      <div id="coursesList"></div>
+    </div>
+  </section>
+
+  <section id="cards" class="hidden">
+    <div class="card">
+      <h2>Lisää / muokkaa korttia</h2>
+      <input type="hidden" id="editCardId">
+      <div class="row">
+        <div><label>Kortin nimi</label><input id="cardTitleInput" placeholder="esim. Vain fore"></div>
+        <div><label>Kategoria</label><input id="cardCategoryInput" placeholder="esim. Heittotapa"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div><label>Vaikeus</label><select id="cardDifficultyInput"><option value="1">1 helppo</option><option value="2">2 normaali</option><option value="3">3 haastava</option><option value="4">4 vaikea</option><option value="5">5 legendaarinen</option></select></div>
+        <div><label>Emoji / symboli</label><input id="cardIconInput" placeholder="🥏"></div>
+      </div>
+      <label style="margin-top:10px">Kuvaus</label><textarea id="cardDescriptionInput" placeholder="Pelaa tämä väylä käyttäen vain kämmenheittoa."></textarea>
+      <button class="primary" style="width:100%; margin-top:12px" onclick="saveCard()">Tallenna kortti</button>
+      <button style="width:100%; margin-top:8px" onclick="resetCardForm()">Tyhjennä lomake</button>
+    </div>
+    <div class="card">
+      <h2>Korttipakka</h2>
+      <div class="row">
+        <button onclick="shuffleDeck(true)">Sekoita pakka</button>
+        <button class="warn" onclick="restoreDefaultCards()">Palauta oletuskortit</button>
+      </div>
+      <p class="muted">Kortit tallentuvat tähän selaimeen. GitHubiin voit viedä muutokset myöhemmin kopioimalla koodiin oletuskorttilistan.</p>
+      <div id="cardsList"></div>
+    </div>
+  </section>
+
+  <section id="history" class="hidden">
+    <div class="card">
+      <h2>Pelihistoria</h2>
+      <div class="row">
+        <button class="primary" onclick="downloadCSV()">Vie CSV</button>
+        <button onclick="copyCSV()">Kopioi CSV</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </section>
+</div>
+
+<div class="footerbar" id="footerBar">
+  <div class="footerinner">
+    <button onclick="showTab('courses')">Kentät</button>
+    <button class="primary" onclick="showTab('game')">Peli</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'fg_challenge_v1';
+const DEFAULT_CARDS = [
+  {id:'c1', title:'Vain rysty', category:'Heittotapa', difficulty:1, icon:'🥏', description:'Pelaa tämä väylä käyttäen vain rystyheittoja.'},
+  {id:'c2', title:'Vain fore', category:'Heittotapa', difficulty:1, icon:'👉', description:'Pelaa tämä väylä käyttäen vain kämmenheittoja.'},
+  {id:'c3', title:'Vain putteri', category:'Kiekkohaaste', difficulty:2, icon:'🎯', description:'Pelaa koko väylä vain putterilla.'},
+  {id:'c4', title:'Vain midari', category:'Kiekkohaaste', difficulty:2, icon:'🥏', description:'Pelaa koko väylä vain midarilla.'},
+  {id:'c5', title:'Sama kiekko koko väylä', category:'Kiekkohaaste', difficulty:2, icon:'🔁', description:'Valitse yksi kiekko ja käytä sitä kaikkiin heittoihin tällä väylällä.'},
+  {id:'c6', title:'Hyzer', category:'Heittokulma', difficulty:1, icon:'↙️', description:'Avausheitto pitää heittää hyzer-kulmalla.'},
+  {id:'c7', title:'Anhyzer', category:'Heittokulma', difficulty:2, icon:'↗️', description:'Avausheitto pitää heittää anhyzer-kulmalla.'},
+  {id:'c8', title:'Hyzer-flip', category:'Heittokulma', difficulty:3, icon:'🌀', description:'Yritä heittää avaus hyzer-flipillä.'},
+  {id:'c9', title:'Matala linja', category:'Linjahaaste', difficulty:2, icon:'⬇️', description:'Avausheiton pitää pysyä matalana.'},
+  {id:'c10', title:'Korkea linja', category:'Linjahaaste', difficulty:2, icon:'⬆️', description:'Avausheitto pitää pelata korkealla linjalla.'},
+  {id:'c11', title:'Ei vauhtia', category:'Tekniikka', difficulty:2, icon:'🧍', description:'Avausheitto pitää heittää paikaltaan ilman vauhtia.'},
+  {id:'c12', title:'5 sekunnin päätös', category:'Hauska haaste', difficulty:1, icon:'⏱️', description:'Sinulla on 5 sekuntia aikaa valita kiekko ja heittolinja.'},
+  {id:'c13', title:'Ensimmäinen valinta', category:'Hauska haaste', difficulty:1, icon:'👆', description:'Ensimmäinen kiekko, johon kosket, on pakko käyttää.'},
+  {id:'c14', title:'Ei puuosumaa', category:'Riskikortti', difficulty:3, icon:'🌲', description:'Jos osut puuhun tällä väylällä, kortti epäonnistuu.'},
+  {id:'c15', title:'Ei OB:lle', category:'Riskikortti', difficulty:3, icon:'🚧', description:'Jos kiekko menee OB:lle, kortti epäonnistuu.'},
+  {id:'c16', title:'Birdie-haaste', category:'Riskikortti', difficulty:4, icon:'🐦', description:'Kortti onnistuu vain, jos saat birdien tai paremman.'},
+  {id:'c17', title:'Laskeudu C1:een', category:'Tarkkuushaaste', difficulty:3, icon:'🎯', description:'Yritä saada avausheitto C1-alueelle.'},
+  {id:'c18', title:'Unohdettu kiekko', category:'Kiekkohaaste', difficulty:2, icon:'🧳', description:'Käytä kiekkoa, jota käytät normaalisti vähiten.'},
+  {id:'c19', title:'Skip-heitto', category:'Linjahaaste', difficulty:4, icon:'💥', description:'Avausheiton pitää yrittää skipata maasta.'},
+  {id:'c20', title:'Roller', category:'Erikoisheitto', difficulty:4, icon:'🛞', description:'Avausheitto pitää yrittää rollerina.'},
+  {id:'c21', title:'Kaveri valitsee kiekon', category:'Hauska haaste', difficulty:3, icon:'🤝', description:'Toinen pelaaja valitsee kiekon, jolla avaat väylän.'},
+  {id:'c22', title:'Legendaarinen putteriväylä', category:'Legendaarinen', difficulty:5, icon:'👑', description:'Pelaa koko väylä putterilla. Kortti onnistuu vain parilla tai paremmalla.'}
+];
+
+let state = loadState();
+let currentGame = null;
+let currentHole = 0;
+let startPlayers = ['Pelaaja 1', 'Pelaaja 2'];
+let deck = [];
+let lastDrawAnimationKey = 0;
+
+function today(){ return new Date().toISOString().slice(0,10); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function clamp(n,min,max){ return Math.max(min, Math.min(max, Number(n))); }
+function escapeHtml(s){ return String(s ?? '').replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function relText(n){ n=Number(n)||0; return n>0 ? '+'+n : String(n); }
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try { const parsed=JSON.parse(raw); return migrateState(parsed); } catch(e){} }
+  return defaultState();
+}
+function defaultState(){
+  return {
+    courses:[
+      {id:uid(), name:'Mallikenttä 9 väylää', pars:[3,3,3,3,3,3,3,3,3]},
+      {id:uid(), name:'Mallikenttä 18 väylää', pars:[3,3,4,3,3,4,3,3,3,4,3,3,5,3,3,4,3,3]}
+    ],
+    cards: structuredClone(DEFAULT_CARDS),
+    games:[]
+  };
+}
+function migrateState(s){
+  if(!s.courses) s.courses = defaultState().courses;
+  if(!s.cards || !s.cards.length) s.cards = structuredClone(DEFAULT_CARDS);
+  if(!s.games) s.games = [];
+  return s;
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
+function shuffleArray(array){
+  const copied=[...array];
+  for(let i=copied.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [copied[i],copied[j]]=[copied[j],copied[i]]; }
+  return copied;
+}
+
+function showTab(tab){
+  for(const id of ['game','courses','cards','history']) document.getElementById(id).classList.toggle('hidden', id!==tab);
+  for(const id of ['tabGame','tabCourses','tabCards','tabHistory']) document.getElementById(id).classList.remove('active');
+  document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+  refreshAll();
+  updateFooterVisibility();
+}
+function refreshAll(){ renderCourseSelect(); renderStartPlayers(); renderParInputs(); renderCoursesList(); renderCardsList(); renderHistory(); }
+
+// Start screen
+function renderCourseSelect(){
+  const sel=document.getElementById('courseSelect');
+  if(!sel) return;
+  const old=sel.value;
+  sel.innerHTML='';
+  state.courses.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=`${c.name} (${c.pars.length} väylää, par ${sum(c.pars)})`; sel.appendChild(o); });
+  if(old) sel.value=old;
+}
+function renderStartPlayers(){
+  const box=document.getElementById('startPlayers');
+  if(!box) return;
+  box.innerHTML='';
+  startPlayers.forEach((name,i)=>{
+    const div=document.createElement('div');
+    div.className='playerRow';
+    div.innerHTML=`<div><label>Pelaaja ${i+1}</label><input value="${escapeHtml(name)}" onchange="startPlayers[${i}]=this.value"></div><div></div><div></div><button class="danger" onclick="removeStartPlayer(${i})">Poista</button>`;
+    box.appendChild(div);
+  });
+}
+function addStartPlayer(){ startPlayers.push('Pelaaja '+(startPlayers.length+1)); renderStartPlayers(); }
+function removeStartPlayer(i){ if(startPlayers.length<=1) return alert('Tarvitaan vähintään yksi pelaaja.'); startPlayers.splice(i,1); renderStartPlayers(); }
+
+// Courses
+function renderParInputs(){
+  const n=Number(document.getElementById('holesCount')?.value || 18);
+  const box=document.getElementById('parInputs'); if(!box) return;
+  const oldValues=Array.from(box.querySelectorAll('input')).map(i=>i.value);
+  box.innerHTML='';
+  for(let i=1;i<=n;i++){
+    const inp=document.createElement('input'); inp.type='number'; inp.min='3'; inp.max='5'; inp.step='1'; inp.value=oldValues[i-1] || '3'; inp.id='par_'+i; inp.setAttribute('aria-label','Par '+i); box.appendChild(inp);
+  }
+}
+function fillDefaultPar(){ const val=document.getElementById('defaultPar').value; document.querySelectorAll('#parInputs input').forEach(i=>i.value=val); }
+function saveCourse(){
+  const name=document.getElementById('courseNameInput').value.trim();
+  if(!name) return alert('Anna kentän nimi.');
+  const n=Number(document.getElementById('holesCount').value || 18);
+  const pars=[];
+  for(let i=1;i<=n;i++) pars.push(clamp(document.getElementById('par_'+i).value || 3,3,5));
+  const editId=document.getElementById('editCourseId').value;
+  if(editId){ const c=state.courses.find(x=>x.id===editId); if(c){ c.name=name; c.pars=pars; } }
+  else state.courses.push({id:uid(), name, pars});
+  saveState(); resetCourseForm(); refreshAll(); alert('Kenttä tallennettu.');
+}
+function editCourse(id){
+  const c=state.courses.find(x=>x.id===id); if(!c) return;
+  document.getElementById('editCourseId').value=c.id;
+  document.getElementById('courseNameInput').value=c.name;
+  document.getElementById('holesCount').value=String(c.pars.length);
+  renderParInputs();
+  c.pars.forEach((p,i)=>{ const el=document.getElementById('par_'+(i+1)); if(el) el.value=p; });
+  showTab('courses'); window.scrollTo({top:0, behavior:'smooth'});
+}
+function deleteCourse(id){
+  if(state.courses.length<=1) return alert('Sovelluksessa pitää olla vähintään yksi kenttä.');
+  if(!confirm('Poistetaanko kenttä? Vanhat pelit säilyvät historiassa.')) return;
+  state.courses=state.courses.filter(c=>c.id!==id); saveState(); refreshAll();
+}
+function resetCourseForm(){
+  document.getElementById('editCourseId').value=''; document.getElementById('courseNameInput').value=''; document.getElementById('holesCount').value='18'; renderParInputs(); fillDefaultPar();
+}
+function renderCoursesList(){
+  const box=document.getElementById('coursesList'); if(!box) return; box.innerHTML='';
+  if(!state.courses.length){ box.innerHTML='<p class="muted">Ei kenttiä.</p>'; return; }
+  state.courses.forEach(c=>{
+    const div=document.createElement('div'); div.className='card'; div.style.boxShadow='none';
+    div.innerHTML=`<b>${escapeHtml(c.name)}</b><br><span class="muted">${c.pars.length} väylää, par ${sum(c.pars)}</span><br><span class="muted">${c.pars.map((p,i)=>'v'+(i+1)+' par '+p).join(', ')}</span><div class="row" style="margin-top:10px"><button class="smallbtn" onclick="editCourse('${c.id}')">Muokkaa</button><button class="smallbtn danger" onclick="deleteCourse('${c.id}')">Poista</button></div>`;
+    box.appendChild(div);
+  });
+}
+
+// Cards
+function saveCard(){
+  const title=document.getElementById('cardTitleInput').value.trim();
+  const category=document.getElementById('cardCategoryInput').value.trim() || 'Haaste';
+  const difficulty=clamp(document.getElementById('cardDifficultyInput').value || 2,1,5);
+  const icon=document.getElementById('cardIconInput').value.trim() || '🥏';
+  const description=document.getElementById('cardDescriptionInput').value.trim();
+  if(!title || !description) return alert('Anna kortille nimi ja kuvaus.');
+  const editId=document.getElementById('editCardId').value;
+  if(editId){ const c=state.cards.find(x=>x.id===editId); if(c){ Object.assign(c,{title,category,difficulty,icon,description}); } }
+  else state.cards.push({id:uid(), title, category, difficulty, icon, description});
+  saveState(); shuffleDeck(false); resetCardForm(); renderCardsList(); alert('Kortti tallennettu.');
+}
+function editCard(id){
+  const c=state.cards.find(x=>x.id===id); if(!c) return;
+  document.getElementById('editCardId').value=c.id;
+  document.getElementById('cardTitleInput').value=c.title;
+  document.getElementById('cardCategoryInput').value=c.category;
+  document.getElementById('cardDifficultyInput').value=String(c.difficulty);
+  document.getElementById('cardIconInput').value=c.icon || '🥏';
+  document.getElementById('cardDescriptionInput').value=c.description;
+  showTab('cards'); window.scrollTo({top:0, behavior:'smooth'});
+}
+function deleteCard(id){
+  if(state.cards.length<=1) return alert('Pakassa pitää olla vähintään yksi kortti.');
+  if(!confirm('Poistetaanko kortti?')) return;
+  state.cards=state.cards.filter(c=>c.id!==id); saveState(); shuffleDeck(false); renderCardsList();
+}
+function resetCardForm(){
+  document.getElementById('editCardId').value=''; document.getElementById('cardTitleInput').value=''; document.getElementById('cardCategoryInput').value=''; document.getElementById('cardDifficultyInput').value='2'; document.getElementById('cardIconInput').value=''; document.getElementById('cardDescriptionInput').value='';
+}
+function restoreDefaultCards(){
+  if(!confirm('Palautetaanko oletuskortit? Tämä korvaa nykyisen korttipakan.')) return;
+  state.cards=structuredClone(DEFAULT_CARDS); saveState(); shuffleDeck(false); resetCardForm(); renderCardsList();
+}
+function renderCardsList(){
+  const box=document.getElementById('cardsList'); if(!box) return; box.innerHTML='';
+  const sorted=[...state.cards].sort((a,b)=>a.difficulty-b.difficulty || a.title.localeCompare(b.title));
+  sorted.forEach(c=>{
+    const div=document.createElement('div'); div.className='card'; div.style.boxShadow='none';
+    div.innerHTML=`<span class="pill purple">Vaikeus ${c.difficulty}</span> <span class="pill">${escapeHtml(c.category)}</span><h3>${escapeHtml(c.icon || '🥏')} ${escapeHtml(c.title)}</h3><p class="muted">${escapeHtml(c.description)}</p><div class="row" style="margin-top:10px"><button class="smallbtn" onclick="editCard('${c.id}')">Muokkaa</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">Poista</button></div>`;
+    box.appendChild(div);
+  });
+}
+
+// Game logic
+function startGame(){
+  if(!state.courses.length) return alert('Lisää ensin kenttä.');
+  const players=startPlayers.map(x=>String(x||'').trim()).filter(Boolean);
+  if(!players.length) return alert('Lisää vähintään yksi pelaaja.');
+  const course=state.courses.find(c=>c.id===document.getElementById('courseSelect').value) || state.courses[0];
+  const startDifficulty=clamp(document.getElementById('startDifficulty').value || 2,1,5);
+  const riseLimit=Number(document.getElementById('riseLimit').value || 1);
+  const dropLimit=Number(document.getElementById('dropLimit').value || 5);
+  if(riseLimit >= dropLimit) return alert('Nousurajan pitää olla pienempi kuin laskuraja. Esim. +1 ja +5.');
+  currentGame={
+    id:uid(), date:document.getElementById('dateInput').value || today(),
+    courseName:course.name, pars:[...course.pars],
+    players:players.map(name=>({id:uid(), name})),
+    settings:{riseLimit, dropLimit, startDifficulty},
+    currentDifficulty:startDifficulty,
+    holes:course.pars.map((par,i)=>({hole:i+1, par, difficulty:null, card:null, results:{}, groupTotal:null, difficultyAfter:null}))
+  };
+  currentGame.holes.forEach(h=> currentGame.players.forEach(p=> h.results[p.id]={strokes:null, cardFail:false}));
+  currentHole=0;
+  shuffleDeck(false);
+  document.getElementById('startCard').classList.add('hidden');
+  document.getElementById('roundCard').classList.remove('hidden');
+  renderGame();
+}
+function renderGame(){
+  if(!currentGame) return;
+  const hole=currentGame.holes[currentHole];
+  if(hole.difficulty==null) hole.difficulty=currentGame.currentDifficulty;
+  document.getElementById('gameCourseName').textContent=currentGame.courseName;
+  document.getElementById('holeTitle').textContent=`Väylä ${currentHole+1} / ${currentGame.pars.length}`;
+  document.getElementById('holePar').textContent=hole.par;
+  document.getElementById('difficultyPill').textContent='Vaikeus '+hole.difficulty;
+  document.getElementById('currentDifficultyInput').value=String(currentGame.currentDifficulty);
+  document.getElementById('gameRiseLimit').value=currentGame.settings.riseLimit;
+  document.getElementById('gameDropLimit').value=currentGame.settings.dropLimit;
+  renderChallengeCard(false);
+  renderPlayerScores();
+  renderHoleButtons();
+  updateTotals();
+  updateNextDifficultyHint();
+  updateFooterVisibility();
+}
+function renderChallengeCard(animated){
+  const box=document.getElementById('challengeCard');
+  const hole=currentGame.holes[currentHole];
+  box.classList.remove('drawn');
+  box.classList.toggle('shuffling', false);
+  if(hole.card){
+    box.innerHTML=`<span class="pill purple">Vaikeus ${hole.card.difficulty}</span><span class="pill">${escapeHtml(hole.card.category)}</span><div class="challengeIcon">${escapeHtml(hole.card.icon || '🥏')}</div><div class="challengeTitle">${escapeHtml(hole.card.title)}</div><p class="challengeDesc">${escapeHtml(hole.card.description)}</p><p class="muted" style="margin-top:12px">Onnistui = +0 · Epäonnistui = +1</p>`;
+    if(animated){ void box.offsetWidth; box.classList.add('drawn'); }
+  } else {
+    box.innerHTML=`<p class="muted">Nosta kortti tälle väylälle.</p><div class="challengeIcon">🃏</div><div class="challengeTitle">Kortti odottaa</div><p class="challengeDesc">Kortti valitaan nykyisen vaikeustason mukaan.</p>`;
+  }
+}
+function shuffleDeck(showMessage){
+  deck=shuffleArray(state.cards.map(c=>c.id));
+  if(showMessage){
+    const card=document.getElementById('challengeCard');
+    if(card){ card.classList.remove('drawn'); card.classList.add('shuffling'); setTimeout(()=>card.classList.remove('shuffling'),900); }
+    setDeckMessage('Pakka sekoitettu! 🔀');
+  }
+}
+function setDeckMessage(text){ const el=document.getElementById('deckMessage'); if(!el) return; el.innerHTML=text ? `<div class="message">${escapeHtml(text)}</div>` : ''; }
+function drawCardForCurrentHole(){
+  if(!currentGame) return;
+  if(!deck.length) shuffleDeck(false);
+  const hole=currentGame.holes[currentHole];
+  const difficulty=hole.difficulty || currentGame.currentDifficulty;
+  let candidates=deck.map(id=>state.cards.find(c=>c.id===id)).filter(Boolean).filter(c=>Number(c.difficulty)===Number(difficulty));
+  if(!candidates.length){
+    const allInDeck=deck.map(id=>state.cards.find(c=>c.id===id)).filter(Boolean);
+    if(allInDeck.length){
+      const nearestDistance=Math.min(...allInDeck.map(c=>Math.abs(Number(c.difficulty)-Number(difficulty))));
+      candidates=allInDeck.filter(c=>Math.abs(Number(c.difficulty)-Number(difficulty))===nearestDistance);
+      setDeckMessage(`Vaikeustasolla ${difficulty} ei ollut kortteja pakassa. Nostettiin lähin sopiva kortti.`);
+    }
+  } else setDeckMessage('');
+  if(!candidates.length) return alert('Korttipakka on tyhjä. Lisää kortteja tai palauta oletuskortit.');
+  const card=candidates[Math.floor(Math.random()*candidates.length)];
+  hole.card=clone(card);
+  deck=deck.filter(id=>id!==card.id);
+  renderChallengeCard(true);
+  updateNextDifficultyHint();
+}
+function renderPlayerScores(){
+  const box=document.getElementById('playerScores'); box.innerHTML='';
+  const hole=currentGame.holes[currentHole];
+  currentGame.players.forEach(p=>{
+    const res=hole.results[p.id] || {strokes:null, cardFail:false};
+    hole.results[p.id]=res;
+    const rel = res.strokes==null ? '–' : relText(Number(res.strokes)-Number(hole.par));
+    const div=document.createElement('div'); div.className='playerLine';
+    div.innerHTML=`
+      <div><b>${escapeHtml(p.name)}</b><br><span class="muted">Väylätulos: ${rel}</span></div>
+      <div><label>Heitot</label><input type="number" min="1" value="${res.strokes ?? ''}" onchange="setPlayerStrokes('${p.id}', this.value)"></div>
+      <div><label>Kortti</label><div class="toggle"><button class="${!res.cardFail ? 'activeSuccess' : ''}" onclick="setCardFail('${p.id}', false)">Onnistui</button><button class="${res.cardFail ? 'activeFail' : ''}" onclick="setCardFail('${p.id}', true)">Epäonnistui</button></div></div>
+      <div class="center"><span class="muted">Yht.</span><br><b>${playerHoleTotal(hole,p.id)}</b></div>`;
+    box.appendChild(div);
+  });
+}
+function setPlayerStrokes(pid, value){
+  const hole=currentGame.holes[currentHole];
+  const v=value==='' ? null : Math.max(1, Number(value));
+  hole.results[pid].strokes=Number.isFinite(v) ? v : null;
+  renderGame();
+}
+function setCardFail(pid, fail){ currentGame.holes[currentHole].results[pid].cardFail=!!fail; renderGame(); }
+function playerHoleCourseRel(hole,pid){ const s=hole.results[pid]?.strokes; return s==null ? 0 : Number(s)-Number(hole.par); }
+function playerHoleCardPoints(hole,pid){ return hole.results[pid]?.cardFail ? 1 : 0; }
+function playerHoleTotal(hole,pid){ return relText(playerHoleCourseRel(hole,pid)+playerHoleCardPoints(hole,pid)); }
+function holeGroupTotal(hole){
+  return currentGame.players.reduce((acc,p)=> acc + playerHoleCourseRel(hole,p.id) + playerHoleCardPoints(hole,p.id), 0);
+}
+function calculateNextDifficultyFromHole(hole){
+  const total=holeGroupTotal(hole);
+  const current=Number(hole.difficulty || currentGame.currentDifficulty);
+  const rise=Number(currentGame.settings.riseLimit);
+  const drop=Number(currentGame.settings.dropLimit);
+  if(total <= rise) return clamp(current+1,1,5);
+  if(total >= drop) return clamp(current-1,1,5);
+  return current;
+}
+function updateNextDifficultyHint(){
+  if(!currentGame) return;
+  const hole=currentGame.holes[currentHole];
+  const total=holeGroupTotal(hole);
+  const next=calculateNextDifficultyFromHole(hole);
+  let action='pysyy samana';
+  if(next > Number(hole.difficulty)) action='nousee';
+  if(next < Number(hole.difficulty)) action='laskee';
+  document.getElementById('nextDifficultyHint').textContent=`Tämän väylän yhteistulos nyt ${relText(total)} → seuraavan väylän vaikeus ${action} tasolle ${next}.`;
+}
+function updateGameSettings(){
+  const rise=Number(document.getElementById('gameRiseLimit').value || 1);
+  const drop=Number(document.getElementById('gameDropLimit').value || 5);
+  if(rise>=drop){ alert('Nousurajan pitää olla pienempi kuin laskuraja.'); renderGame(); return; }
+  currentGame.settings.riseLimit=rise; currentGame.settings.dropLimit=drop; renderGame();
+}
+function updateCurrentDifficultyFromInput(){
+  const d=clamp(document.getElementById('currentDifficultyInput').value || 2,1,5);
+  currentGame.currentDifficulty=d;
+  const hole=currentGame.holes[currentHole];
+  hole.difficulty=d;
+  renderGame();
+}
+function finishHoleAndNext(){
+  if(!currentGame) return;
+  const hole=currentGame.holes[currentHole];
+  if(!hole.card && !confirm('Tälle väylälle ei ole nostettu korttia. Jatketaanko silti?')) return;
+  const empty=currentGame.players.filter(p=>hole.results[p.id].strokes==null).length;
+  if(empty && !confirm(`${empty} pelaajalta puuttuu heittotulos. Jatketaanko?`)) return;
+  hole.groupTotal=holeGroupTotal(hole);
+  hole.difficultyAfter=calculateNextDifficultyFromHole(hole);
+  currentGame.currentDifficulty=hole.difficultyAfter;
+  if(currentHole < currentGame.holes.length-1){
+    currentHole++;
+    if(currentGame.holes[currentHole].difficulty==null) currentGame.holes[currentHole].difficulty=currentGame.currentDifficulty;
+    renderGame();
+  } else {
+    alert('Viimeinen väylä valmis. Voit tallentaa pelin.');
+    renderGame();
+  }
+}
+function prevHole(){ if(currentHole>0){ currentHole--; renderGame(); } }
+function nextHoleOnly(){ if(currentHole<currentGame.holes.length-1){ currentHole++; if(currentGame.holes[currentHole].difficulty==null) currentGame.holes[currentHole].difficulty=currentGame.currentDifficulty; renderGame(); } }
+function goHole(i){ currentHole=i; if(currentGame.holes[currentHole].difficulty==null) currentGame.holes[currentHole].difficulty=currentGame.currentDifficulty; renderGame(); }
+function renderHoleButtons(){
+  const box=document.getElementById('holeButtons'); box.innerHTML='';
+  currentGame.holes.forEach((h,i)=>{ const b=document.createElement('button'); b.textContent=`${i+1}: ${h.card ? h.card.title.slice(0,12) : '–'}`; if(i===currentHole) b.className='ghost'; b.onclick=()=>goHole(i); box.appendChild(b); });
+}
+function gameTotals(game=currentGame){
+  const playerTotals=game.players.map(p=>{
+    let course=0, cards=0;
+    game.holes.forEach(h=>{ course += (h.results[p.id]?.strokes==null ? 0 : Number(h.results[p.id].strokes)-Number(h.par)); cards += h.results[p.id]?.cardFail ? 1 : 0; });
+    return {id:p.id, name:p.name, course, cards, total:course+cards};
+  });
+  return playerTotals;
+}
+function updateTotals(){
+  const totals=gameTotals();
+  const course=sum(totals.map(t=>t.course));
+  const cards=sum(totals.map(t=>t.cards));
+  document.getElementById('totalCourse').textContent=relText(course);
+  document.getElementById('totalCards').textContent=relText(cards);
+  document.getElementById('totalAll').textContent=relText(course+cards);
+}
+function saveGame(){
+  if(!currentGame) return;
+  const missing=currentGame.holes.reduce((acc,h)=> acc + currentGame.players.filter(p=>h.results[p.id].strokes==null).length,0);
+  if(missing && !confirm(`Tallennetaanko peli? ${missing} pelaajaväylältä puuttuu heittotulos.`)) return;
+  currentGame.savedAt=new Date().toISOString();
+  state.games.push(clone(currentGame)); saveState();
+  currentGame=null;
+  document.getElementById('roundCard').classList.add('hidden'); document.getElementById('startCard').classList.remove('hidden');
+  renderHistory(); showTab('history');
+}
+function cancelGame(){
+  if(!confirm('Perutaanko tallentamaton peli?')) return;
+  currentGame=null; document.getElementById('roundCard').classList.add('hidden'); document.getElementById('startCard').classList.remove('hidden'); updateFooterVisibility();
+}
+
+// History and CSV
+function renderHistory(){
+  const box=document.getElementById('historyList'); if(!box) return; box.innerHTML='';
+  if(!state.games.length){ box.innerHTML='<p class="muted">Ei tallennettuja pelejä vielä.</p>'; return; }
+  [...state.games].reverse().forEach(g=>{
+    const totals=gameTotals(g).sort((a,b)=>a.total-b.total);
+    const winner=totals[0];
+    const div=document.createElement('div'); div.className='card'; div.style.boxShadow='none';
+    div.innerHTML=`<b>${escapeHtml(g.date)} · ${escapeHtml(g.courseName)}</b><br><span class="pill good">Voittaja: ${escapeHtml(winner.name)} ${relText(winner.total)}</span><div style="margin-top:10px; overflow:auto"><table><thead><tr><th>Pelaaja</th><th>Rata</th><th>Kortit</th><th>Yht.</th></tr></thead><tbody>${totals.map(t=>`<tr><td>${escapeHtml(t.name)}</td><td>${relText(t.course)}</td><td>${relText(t.cards)}</td><td><b>${relText(t.total)}</b></td></tr>`).join('')}</tbody></table></div><button class="smallbtn danger" style="margin-top:10px" onclick="deleteGame('${g.id}')">Poista</button>`;
+    box.appendChild(div);
+  });
+}
+function deleteGame(id){ if(confirm('Poistetaanko peli historiasta?')){ state.games=state.games.filter(g=>g.id!==id); saveState(); renderHistory(); } }
+function csvRows(){
+  const rows=[['pvm','kentta','pelaaja','rata_pisteet','korttipisteet','yhteensa','vaikeus_alku','nousuraja','laskuraja',...Array.from({length:18},(_,i)=>'v'+(i+1)+'_heitot'),...Array.from({length:18},(_,i)=>'v'+(i+1)+'_kortti_epaonnistui')]];
+  state.games.forEach(g=>{
+    gameTotals(g).forEach(t=>{
+      const strokes=[]; const fails=[];
+      for(let i=0;i<18;i++){ const h=g.holes[i]; strokes.push(h?.results[t.id]?.strokes ?? ''); fails.push(h?.results[t.id]?.cardFail ? 1 : 0); }
+      rows.push([g.date,g.courseName,t.name,t.course,t.cards,t.total,g.settings.startDifficulty,g.settings.riseLimit,g.settings.dropLimit,...strokes,...fails]);
+    });
+  });
+  return rows;
+}
+function csvCell(v){ const s=String(v ?? ''); return /[;"\n]/.test(s) ? '"'+s.replaceAll('"','""')+'"' : s; }
+function toCSV(){ return csvRows().map(r=>r.map(csvCell).join(';')).join('\n'); }
+function downloadCSV(){
+  const blob=new Blob([toCSV()],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='fribagolf_challenge.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+async function copyCSV(){ try{ await navigator.clipboard.writeText(toCSV()); alert('CSV kopioitu leikepöydälle.'); } catch(e){ alert('Kopiointi ei onnistunut. Käytä Vie CSV -painiketta.'); } }
+function updateFooterVisibility(){ const footer=document.getElementById('footerBar'); if(!footer) return; const isPlaying=currentGame && !document.getElementById('roundCard').classList.contains('hidden'); footer.classList.toggle('hidden', !!isPlaying); }
+function sum(arr){ return arr.reduce((a,b)=>a+Number(b||0),0); }
+
+// Init
+document.getElementById('dateInput').value=today();
+renderParInputs(); fillDefaultPar(); shuffleDeck(false); refreshAll(); updateFooterVisibility();
+</script>
+</body>
+</html>
