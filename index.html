@@ -1,10 +1,6 @@
 <!doctype html>
 <html lang="fi">
 <head>
-  <link rel="icon" type="image/png" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="manifest" href="site.webmanifest">
-  <meta name="theme-color" content="#2563eb">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#2563eb">
@@ -63,8 +59,16 @@
     .playerLine input { padding:10px; text-align:center; }
     .toggle { display:flex; gap:6px; }
     .toggle button { flex:1; padding:10px 8px; font-size:13px; }
-    .toggle button.activeSuccess { background:#dcfce7; color:#166534; }
-    .toggle button.activeFail { background:#fee2e2; color:#991b1b; }
+    .toggle button.activeSuccess { background:#dcfce7; color:#166534; border:2px solid #16a34a; }
+    .toggle button.activeFail { background:#fee2e2; color:#991b1b; border:2px solid #dc2626; }
+    .toggle button:not(.activeSuccess):not(.activeFail) { background:#e5e7eb; color:var(--text); border:2px solid transparent; }
+    .strokeControl { display:grid; grid-template-columns:54px 1fr 54px; gap:6px; align-items:center; }
+    .strokeControl button { padding:10px 8px; min-height:46px; }
+    .strokeValue { background:#e5e7eb; color:var(--text); border:2px solid transparent; border-radius:14px; font-size:18px; font-weight:800; }
+    .strokeValue.active { background:#eef2ff; color:#1d4ed8; border-color:var(--accent); }
+    .settingsSummary { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; background:#f8fafc; border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:10px; }
+    .settingsSummary button { padding:10px 12px; font-size:14px; }
+    .settingsEditor { background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:10px; }
     .challengeCard { min-height:260px; border-radius:24px; padding:22px; background:linear-gradient(145deg,#ffffff,#eff6ff); border:2px solid #bfdbfe; box-shadow:0 18px 40px rgba(16,24,40,.12); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; transition:transform .3s ease; }
     .challengeCard.shuffling { animation:shuffle .9s ease; }
     .challengeCard.drawn { animation:flipIn .45s ease; }
@@ -88,6 +92,17 @@
     .holeNavRow button:nth-child(2) { font-size:16px; }
     .holelist { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px; }
     .holelist button { font-size:13px; padding:8px; font-weight:600; }
+
+    #parInputs.holelist { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .parInputItem { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid var(--line); border-radius:12px; padding:8px 10px; background:#fff; min-height:58px; overflow:hidden; }
+    .parInputItem span { color:var(--muted); font-weight:800; font-size:13px; white-space:nowrap; line-height:1; flex:1 1 auto; min-width:0; }
+    .parInputItem input { width:58px; flex:0 0 58px; border:1px solid var(--line); border-radius:10px; padding:8px 4px; text-align:center; font-size:16px; font-weight:800; background:#fff; min-width:0; }
+    .parInputItem input:focus { outline:2px solid #bfdbfe; border-color:#93c5fd; }
+    @media (max-width:520px){
+      #parInputs.holelist { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .parInputItem { padding:8px 10px; }
+      .parInputItem input { width:56px; flex-basis:56px; }
+    }
     table { width:100%; border-collapse:collapse; font-size:14px; }
     th, td { border-bottom:1px solid var(--line); padding:9px 6px; text-align:left; vertical-align:top; }
     th { color:var(--muted); font-weight:700; }
@@ -131,13 +146,23 @@
       </div>
 
       <div class="card" style="box-shadow:none; margin:12px 0 0;">
-        <h3>Vaikeustason säätö</h3>
-        <div class="row3">
-          <div><label>Aloitusvaikeus</label><select id="startDifficulty"><option value="1">1 helppo</option><option value="2" selected>2 normaali</option><option value="3">3 haastava</option><option value="4">4 vaikea</option><option value="5">5 legendaarinen</option></select></div>
-          <div><label>Nousuraja</label><input type="number" id="riseLimit" value="1"></div>
-          <div><label>Laskuraja</label><input type="number" id="dropLimit" value="5"></div>
+        <h3>Levelin säätö</h3>
+        <div><label>Aloituslevel</label><select id="startDifficulty"><option value="1">1 Mummo-level</option><option value="2" selected>2 Semipeluri-level</option><option value="3">3 Riski-level</option></select></div>
+        <div class="settingsSummary">
+          <div>
+            <span class="muted">Vaikeussäätö</span><br>
+            <b>Nousu ≤ <span id="startRiseText">+1</span> | <span id="startDropText">+5</span> ≤ Lasku</b>
+          </div>
+          <button type="button" onclick="toggleStartLimitEditor()">Vaihda</button>
         </div>
-        <p class="muted">Jos väylän yhteistulos on nousuraja tai parempi, vaikeus nousee. Jos yhteistulos on laskuraja tai huonompi, vaikeus laskee. Muuten vaikeus pysyy samana.</p>
+        <div id="startLimitEditor" class="settingsEditor hidden">
+          <div class="row">
+            <div><label>Nousuraja</label><input type="number" id="riseLimit" value="1" onchange="normalizeStartLimits('rise')"></div>
+            <div><label>Laskuraja</label><input type="number" id="dropLimit" value="5" onchange="normalizeStartLimits('drop')"></div>
+          </div>
+          <p class="muted">Sääntö: väylän yhteistulos ≤ nousuraja nostaa leveliä. Väylän yhteistulos ≥ laskuraja laskee leveliä. Rajat korjataan automaattisesti niin, että nousuraja on aina pienempi kuin laskuraja.</p>
+          <button type="button" class="primary" style="width:100%" onclick="applyStartLimitsFromInputs()">Tallenna rajat</button>
+        </div>
       </div>
 
       <button class="primary" style="width:100%; margin-top:12px" onclick="startGame()">Aloita peli</button>
@@ -148,7 +173,7 @@
       <div class="center">
         <div class="muted" id="gameCourseName"></div>
         <h2 id="holeTitle">Väylä</h2>
-        <div>Par <span class="pill" id="holePar">3</span> <span class="pill purple" id="difficultyPill">Vaikeus 2</span></div>
+        <div>Par <span class="pill" id="holePar">3</span> <span class="pill purple" id="difficultyPill">Semipeluri-level</span></div>
       </div>
 
       <div class="scoregrid" style="margin-top:12px">
@@ -169,18 +194,28 @@
 
       <div class="card" style="box-shadow:none; margin-top:12px">
         <h3>Väylän tulokset</h3>
-        <p class="muted">Syötä heitot. Kortti epäonnistui = +1 korttipiste. Onnistui = +0.</p>
+        <p class="muted">Merkitse heitot painikkeilla. Keskimmäinen ruutu merkitsee par-tuloksen. Onnistui = +0 · Epäonnistui = +1.</p>
         <div id="playerScores"></div>
       </div>
 
       <div class="card" style="box-shadow:none; margin-top:12px">
-        <h3>Vaikeussäännöt kesken pelin</h3>
-        <div class="row3">
-          <div><label>Nykyinen vaikeus</label><select id="currentDifficultyInput" onchange="updateCurrentDifficultyFromInput()"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
-          <div><label>Nousuraja</label><input type="number" id="gameRiseLimit" onchange="updateGameSettings()"></div>
-          <div><label>Laskuraja</label><input type="number" id="gameDropLimit" onchange="updateGameSettings()"></div>
+        <h3>Levelsäännöt kesken pelin</h3>
+        <div class="settingsSummary">
+          <div>
+            <span class="muted">Vaikeussäätö</span><br>
+            <b>Nousu ≤ <span id="gameRiseText">+1</span> | <span id="gameDropText">+5</span> ≤ Lasku</b>
+          </div>
+          <button type="button" onclick="toggleGameLimitEditor()">Vaihda</button>
         </div>
-        <p class="muted" id="nextDifficultyHint">Seuraavan väylän vaikeus päivittyy väylän yhteistuloksen perusteella.</p>
+        <div id="gameLimitEditor" class="settingsEditor hidden">
+          <div class="row3">
+            <div><label>Nykyinen level</label><select id="currentDifficultyInput" onchange="updateCurrentDifficultyFromInput()"><option value="1">1 Mummo</option><option value="2">2 Semipeluri</option><option value="3">3 Riski</option></select></div>
+            <div><label>Nousuraja</label><input type="number" id="gameRiseLimit" onchange="normalizeGameLimits('rise')"></div>
+            <div><label>Laskuraja</label><input type="number" id="gameDropLimit" onchange="normalizeGameLimits('drop')"></div>
+          </div>
+          <button type="button" class="primary" style="width:100%; margin-top:10px" onclick="updateGameSettings()">Tallenna rajat</button>
+        </div>
+        <p class="muted" id="nextDifficultyHint">Seuraavan väylän level päivittyy väylän yhteistuloksen perusteella.</p>
       </div>
 
       <div class="holeNavRow">
@@ -223,7 +258,7 @@
         <div><label>Kategoria</label><input id="cardCategoryInput" placeholder="esim. Heittotapa"></div>
       </div>
       <div class="row" style="margin-top:10px">
-        <div><label>Vaikeus</label><select id="cardDifficultyInput"><option value="1">1 helppo</option><option value="2">2 normaali</option><option value="3">3 haastava</option><option value="4">4 vaikea</option><option value="5">5 legendaarinen</option></select></div>
+        <div><label>Level</label><select id="cardDifficultyInput"><option value="1">1 Mummo-level</option><option value="2">2 Semipeluri-level</option><option value="3">3 Riski-level</option></select></div>
         <div><label>Emoji / symboli</label><input id="cardIconInput" placeholder="🥏"></div>
       </div>
       <label style="margin-top:10px">Kuvaus</label><textarea id="cardDescriptionInput" placeholder="Pelaa tämä väylä käyttäen vain kämmenheittoa."></textarea>
@@ -263,29 +298,497 @@
 <script>
 const STORAGE_KEY = 'fg_challenge_v1';
 const DEFAULT_CARDS = [
-  {id:'c1', title:'Vain rysty', category:'Heittotapa', difficulty:1, icon:'🥏', description:'Pelaa tämä väylä käyttäen vain rystyheittoja.'},
-  {id:'c2', title:'Vain fore', category:'Heittotapa', difficulty:1, icon:'👉', description:'Pelaa tämä väylä käyttäen vain kämmenheittoja.'},
-  {id:'c3', title:'Vain putteri', category:'Kiekkohaaste', difficulty:2, icon:'🎯', description:'Pelaa koko väylä vain putterilla.'},
-  {id:'c4', title:'Vain midari', category:'Kiekkohaaste', difficulty:2, icon:'🥏', description:'Pelaa koko väylä vain midarilla.'},
-  {id:'c5', title:'Sama kiekko koko väylä', category:'Kiekkohaaste', difficulty:2, icon:'🔁', description:'Valitse yksi kiekko ja käytä sitä kaikkiin heittoihin tällä väylällä.'},
-  {id:'c6', title:'Hyzer', category:'Heittokulma', difficulty:1, icon:'↙️', description:'Avausheitto pitää heittää hyzer-kulmalla.'},
-  {id:'c7', title:'Anhyzer', category:'Heittokulma', difficulty:2, icon:'↗️', description:'Avausheitto pitää heittää anhyzer-kulmalla.'},
-  {id:'c8', title:'Hyzer-flip', category:'Heittokulma', difficulty:3, icon:'🌀', description:'Yritä heittää avaus hyzer-flipillä.'},
-  {id:'c9', title:'Matala linja', category:'Linjahaaste', difficulty:2, icon:'⬇️', description:'Avausheiton pitää pysyä matalana.'},
-  {id:'c10', title:'Korkea linja', category:'Linjahaaste', difficulty:2, icon:'⬆️', description:'Avausheitto pitää pelata korkealla linjalla.'},
-  {id:'c11', title:'Ei vauhtia', category:'Tekniikka', difficulty:2, icon:'🧍', description:'Avausheitto pitää heittää paikaltaan ilman vauhtia.'},
-  {id:'c12', title:'5 sekunnin päätös', category:'Hauska haaste', difficulty:1, icon:'⏱️', description:'Sinulla on 5 sekuntia aikaa valita kiekko ja heittolinja.'},
-  {id:'c13', title:'Ensimmäinen valinta', category:'Hauska haaste', difficulty:1, icon:'👆', description:'Ensimmäinen kiekko, johon kosket, on pakko käyttää.'},
-  {id:'c14', title:'Ei puuosumaa', category:'Riskikortti', difficulty:3, icon:'🌲', description:'Jos osut puuhun tällä väylällä, kortti epäonnistuu.'},
-  {id:'c15', title:'Ei OB:lle', category:'Riskikortti', difficulty:3, icon:'🚧', description:'Jos kiekko menee OB:lle, kortti epäonnistuu.'},
-  {id:'c16', title:'Birdie-haaste', category:'Riskikortti', difficulty:4, icon:'🐦', description:'Kortti onnistuu vain, jos saat birdien tai paremman.'},
-  {id:'c17', title:'Laskeudu C1:een', category:'Tarkkuushaaste', difficulty:3, icon:'🎯', description:'Yritä saada avausheitto C1-alueelle.'},
-  {id:'c18', title:'Unohdettu kiekko', category:'Kiekkohaaste', difficulty:2, icon:'🧳', description:'Käytä kiekkoa, jota käytät normaalisti vähiten.'},
-  {id:'c19', title:'Skip-heitto', category:'Linjahaaste', difficulty:4, icon:'💥', description:'Avausheiton pitää yrittää skipata maasta.'},
-  {id:'c20', title:'Roller', category:'Erikoisheitto', difficulty:4, icon:'🛞', description:'Avausheitto pitää yrittää rollerina.'},
-  {id:'c21', title:'Kaveri valitsee kiekon', category:'Hauska haaste', difficulty:3, icon:'🤝', description:'Toinen pelaaja valitsee kiekon, jolla avaat väylän.'},
-  {id:'c22', title:'Legendaarinen putteriväylä', category:'Legendaarinen', difficulty:5, icon:'👑', description:'Pelaa koko väylä putterilla. Kortti onnistuu vain parilla tai paremmalla.'}
+  {
+    "id": "c1",
+    "title": "Vain rysty",
+    "category": "Heittotapa",
+    "difficulty": 1,
+    "icon": "🥏",
+    "description": "Pelaa väylä käyttäen vain rystyheittoja."
+  },
+  {
+    "id": "c2",
+    "title": "Vain fore",
+    "category": "Heittotapa",
+    "difficulty": 1,
+    "icon": "👉",
+    "description": "Pelaa väylä käyttäen vain kämmenheittoja."
+  },
+  {
+    "id": "c3",
+    "title": "Vain putteri lähestymisissä",
+    "category": "Kiekkohaaste",
+    "difficulty": 1,
+    "icon": "🎯",
+    "description": "Avauksen jälkeen kaikki heitot pitää heittää putterilla. Voit vaihtaa putteria."
+  },
+  {
+    "id": "c4",
+    "title": "Ei draiveria",
+    "category": "Kiekkohaaste",
+    "difficulty": 1,
+    "icon": "🚫",
+    "description": "Pelaa väylä ilman draiveria."
+  },
+  {
+    "id": "c5",
+    "title": "Päätä kiekko 10 sekunnissa",
+    "category": "Hauska haaste",
+    "difficulty": 1,
+    "icon": "⏱️",
+    "description": "Avauskiekko pitää valita 10 sekunnissa. Aika alkaa nyt!"
+  },
+  {
+    "id": "c6",
+    "title": "Ensimmäinen valinta",
+    "category": "Hauska haaste",
+    "difficulty": 1,
+    "icon": "👆",
+    "description": "Ensimmäinen kiekko, johon kosket, on pakko käyttää avauksessa."
+  },
+  {
+    "id": "c7",
+    "title": "Ei harjoitusheittoa",
+    "category": "Tekniikka",
+    "difficulty": 1,
+    "icon": "🙅",
+    "description": "Et saa tehdä harjoitusheilautusta ennen avausta."
+  },
+  {
+    "id": "c8",
+    "title": "Pelaa turvallinen linja",
+    "category": "Taktiikka",
+    "difficulty": 1,
+    "icon": "🛡️",
+    "description": "Valitse väylälle turvallisin linja. Riskilinjaa ei saa käyttää."
+  },
+  {
+    "id": "c9",
+    "title": "Pysy väylällä",
+    "category": "Tarkkuushaaste",
+    "difficulty": 1,
+    "icon": "🌲",
+    "description": "Avausheiton pitää pysyä selvästi pelialueella. Virhemarginaali on noin ±2 m puulinjasta."
+  },
+  {
+    "id": "c10",
+    "title": "Bogey riittää",
+    "category": "Tuloshaaste",
+    "difficulty": 1,
+    "icon": "✅",
+    "description": "Haaste onnistuu, jos saat bogeyn tai paremman."
+  },
+  {
+    "id": "c11",
+    "title": "Hyzer",
+    "category": "Heittokulma",
+    "difficulty": 1,
+    "icon": "↙️",
+    "description": "Avausheitto pitää heittää hyzer-kulmalla. Saat valita rystyn tai foren."
+  },
+  {
+    "id": "c12",
+    "title": "Anhyzer",
+    "category": "Heittokulma",
+    "difficulty": 1,
+    "icon": "↗️",
+    "description": "Avausheitto pitää heittää anhyzer-kulmalla. Saat valita rystyn tai foren."
+  },
+  {
+    "id": "c13",
+    "title": "Matala linja",
+    "category": "Linjahaaste",
+    "difficulty": 1,
+    "icon": "⬇️",
+    "description": "Avausheiton pitää pysyä matalana. Voitte yhdessä määrittää rajan väylän mukaan, mutta ehdotus on max 5 m korkeutta maasta."
+  },
+  {
+    "id": "c14",
+    "title": "Korkea linja",
+    "category": "Linjahaaste",
+    "difficulty": 1,
+    "icon": "⬆️",
+    "description": "Avausheiton pitää lähteä selvästi korkealla linjalla. Voitte yhdessä määrittää rajan väylän mukaan, mutta ehdotus on vähintään 10 m korkeutta maasta."
+  },
+  {
+    "id": "c15",
+    "title": "Paikaltaan heitto",
+    "category": "Tekniikka",
+    "difficulty": 1,
+    "icon": "🧍",
+    "description": "Avausheitto pitää heittää paikaltaan ilman vauhtia."
+  },
+  {
+    "id": "c16",
+    "title": "Yhden askeleen heitto",
+    "category": "Tekniikka",
+    "difficulty": 1,
+    "icon": "👣",
+    "description": "Avausheitto saa sisältää vain yhden vauhtiaskeleen."
+  },
+  {
+    "id": "c17",
+    "title": "Ei vaihtoa",
+    "category": "Taktiikka",
+    "difficulty": 1,
+    "icon": "🔒",
+    "description": "Kun olet päättänyt kiekon ja heittolinjan, et saa vaihtaa suunnitelmaa."
+  },
+  {
+    "id": "c18",
+    "title": "Väylän keskelle",
+    "category": "Tarkkuushaaste",
+    "difficulty": 1,
+    "icon": "🎯",
+    "description": "Avausheiton pitää päätyä selvästi väylälle tai yhdessä sovittuun laskeutumisalueeseen."
+  },
+  {
+    "id": "c19",
+    "title": "Vain midari",
+    "category": "Kiekkohaaste",
+    "difficulty": 2,
+    "icon": "🥏",
+    "description": "Pelaa koko väylä avauksesta puttiin midarilla. Voit vaihtaa midaria."
+  },
+  {
+    "id": "c20",
+    "title": "Sama kiekko koko väylä",
+    "category": "Kiekkohaaste",
+    "difficulty": 2,
+    "icon": "🔁",
+    "description": "Valitse yksi kiekko ja käytä sitä kaikkiin heittoihin tällä väylällä."
+  },
+  {
+    "id": "c21",
+    "title": "Ei puuosumaa",
+    "category": "Riskikortti",
+    "difficulty": 2,
+    "icon": "🌲",
+    "description": "Kortti epäonnistuu, jos osut puuhun tällä väylällä."
+  },
+  {
+    "id": "c22",
+    "title": "Ei OB:lle",
+    "category": "Riskikortti",
+    "difficulty": 2,
+    "icon": "🚧",
+    "description": "Kortti epäonnistuu, jos kiekko menee OB-alueelle tällä väylällä."
+  },
+  {
+    "id": "c23",
+    "title": "C1-tavoite",
+    "category": "Tarkkuushaaste",
+    "difficulty": 2,
+    "icon": "🎯",
+    "description": "Haaste onnistuu, jos avaus tai lähestyminen päätyy C1-alueelle eli noin 10 metrin säteelle korista."
+  },
+  {
+    "id": "c24",
+    "title": "Kaveri valitsee kiekon",
+    "category": "Hauska haaste",
+    "difficulty": 2,
+    "icon": "🤝",
+    "description": "Toinen pelaaja valitsee kiekon, jolla avaat väylän."
+  },
+  {
+    "id": "c25",
+    "title": "Vain putteri",
+    "category": "Kiekkohaaste",
+    "difficulty": 2,
+    "icon": "🎯",
+    "description": "Pelaa koko väylä vain putterilla. Voit vaihtaa putteria."
+  },
+  {
+    "id": "c26",
+    "title": "Alivakain kiekko",
+    "category": "Kiekkohaaste",
+    "difficulty": 2,
+    "icon": "🪁",
+    "description": "Pelaa avaus alivakaimmalla sopivalla kiekollasi."
+  },
+  {
+    "id": "c27",
+    "title": "Ylivakain kiekko",
+    "category": "Kiekkohaaste",
+    "difficulty": 2,
+    "icon": "🪨",
+    "description": "Pelaa avaus ylivakaimmalla sopivalla kiekollasi."
+  },
+  {
+    "id": "c28",
+    "title": "Rystyhysse",
+    "category": "Heittokulma",
+    "difficulty": 2,
+    "icon": "↙️",
+    "description": "Avausheitto pitää heittää rystyllä hyzer-kulmalla."
+  },
+  {
+    "id": "c29",
+    "title": "Forehysse",
+    "category": "Heittokulma",
+    "difficulty": 2,
+    "icon": "↘️",
+    "description": "Avausheitto pitää heittää kämmenellä hyzer-kulmalla."
+  },
+  {
+    "id": "c30",
+    "title": "Rystyanza",
+    "category": "Heittokulma",
+    "difficulty": 2,
+    "icon": "↗️",
+    "description": "Avausheitto pitää heittää rystyllä anhyzer-kulmalla."
+  },
+  {
+    "id": "c31",
+    "title": "Foreanza",
+    "category": "Heittokulma",
+    "difficulty": 2,
+    "icon": "↖️",
+    "description": "Avausheitto pitää heittää kämmenellä anhyzer-kulmalla."
+  },
+  {
+    "id": "c32",
+    "title": "Hyzer-flip",
+    "category": "Heittokulma",
+    "difficulty": 2,
+    "icon": "🌀",
+    "description": "Avausheiton pitää yrittää hyzer-flippiä: kiekko lähtee hyzerissä, nousee suoraksi ja liitää ennen loppufeidiä."
+  },
+  {
+    "id": "c33",
+    "title": "Flex-shot",
+    "category": "Heittokulma",
+    "difficulty": 2,
+    "icon": "〰️",
+    "description": "Avausheiton pitää olla flex-linja: kiekko lähtee anhyzerissä, kaartaa ensin yli ja palauttaa lopussa takaisin."
+  },
+  {
+    "id": "c34",
+    "title": "Skip-heitto",
+    "category": "Linjahaaste",
+    "difficulty": 2,
+    "icon": "💥",
+    "description": "Avausheitossa pitää yrittää skipata maasta."
+  },
+  {
+    "id": "c35",
+    "title": "Roller",
+    "category": "Erikoisheitto",
+    "difficulty": 2,
+    "icon": "🛞",
+    "description": "Avausheiton pitää olla roller tai selkeä roller-yritys."
+  },
+  {
+    "id": "c36",
+    "title": "Fore-lähestyminen",
+    "category": "Heittotapa",
+    "difficulty": 2,
+    "icon": "👉",
+    "description": "Kaikki lähestymisheitot pitää heittää kämmenellä."
+  },
+  {
+    "id": "c37",
+    "title": "Rysty-lähestyminen",
+    "category": "Heittotapa",
+    "difficulty": 2,
+    "icon": "🥏",
+    "description": "Kaikki lähestymisheitot pitää heittää rystyllä."
+  },
+  {
+    "id": "c38",
+    "title": "Putteriavaus",
+    "category": "Kiekkohaaste",
+    "difficulty": 2,
+    "icon": "🎯",
+    "description": "Avausheitto pitää heittää putterilla."
+  },
+  {
+    "id": "c39",
+    "title": "Midariavaus pitkällä väylällä",
+    "category": "Kiekkohaaste",
+    "difficulty": 2,
+    "icon": "🥏",
+    "description": "Avaus pitää heittää midarilla, vaikka väylä olisi pitkä."
+  },
+  {
+    "id": "c40",
+    "title": "Puttaa heikommalla",
+    "category": "Puttikortti",
+    "difficulty": 2,
+    "icon": "✋",
+    "description": "Kaikki putit pitää suorittaa ei-dominoivalla kädellä."
+  },
+  {
+    "id": "c41",
+    "title": "Par riittää",
+    "category": "Tuloshaaste",
+    "difficulty": 2,
+    "icon": "✅",
+    "description": "Haaste onnistuu, jos saat parin tai paremman."
+  },
+  {
+    "id": "c42",
+    "title": "Birdie riittää",
+    "category": "Tuloshaaste",
+    "difficulty": 3,
+    "icon": "🐦",
+    "description": "Haaste onnistuu vain, jos saat birdien tai paremman."
+  },
+  {
+    "id": "c43",
+    "title": "Ei virheitä",
+    "category": "Riskikortti",
+    "difficulty": 3,
+    "icon": "🚫",
+    "description": "Kortti epäonnistuu, jos tulee OB, puuosuma tai selvä griplock."
+  },
+  {
+    "id": "c44",
+    "title": "Vain fore koko väylä",
+    "category": "Heittotapa",
+    "difficulty": 3,
+    "icon": "👉",
+    "description": "Kaikki heitot, myös lähestymiset ja putit, pitää heittää kämmenellä, jos se on turvallista."
+  },
+  {
+    "id": "c45",
+    "title": "Vain rysty koko väylä",
+    "category": "Heittotapa",
+    "difficulty": 3,
+    "icon": "🥏",
+    "description": "Kaikki heitot, myös lähestymiset ja putit, pitää heittää rystyllä."
+  },
+  {
+    "id": "c46",
+    "title": "Kapea linja",
+    "category": "Linjahaaste",
+    "difficulty": 3,
+    "icon": "🌲",
+    "description": "Valitse selkeä kapea väli ja yritä osua siihen avauksessa."
+  },
+  {
+    "id": "c47",
+    "title": "Aggressiivinen linja",
+    "category": "Taktiikka",
+    "difficulty": 3,
+    "icon": "🔥",
+    "description": "Valitse väylälle hyökkäävämpi linja kuin normaalisti."
+  },
+  {
+    "id": "c48",
+    "title": "Täysi lähetys",
+    "category": "Pituushaaste",
+    "difficulty": 3,
+    "icon": "🚀",
+    "description": "Avaus pitää heittää rohkeana pituusheittona väylän päälinjaa pitkin."
+  },
+  {
+    "id": "c49",
+    "title": "Ei feidilinjaa",
+    "category": "Linjahaaste",
+    "difficulty": 3,
+    "icon": "🧭",
+    "description": "Et saa käyttää helppoa varmaa feidilinjaa. Kiekon pitää liitää suorempaa tai muotoiltua linjaa."
+  },
+  {
+    "id": "c50",
+    "title": "Putter only par",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "👑",
+    "description": "Pelaa koko väylä putterilla. Haaste onnistuu vain parilla tai paremmalla."
+  },
+  {
+    "id": "c51",
+    "title": "Roller-väylä",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "🛞",
+    "description": "Pelaa avaus rollerina, vaikka se ei olisi helpoin valinta."
+  },
+  {
+    "id": "c52",
+    "title": "Epämukava kiekko",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "🧳",
+    "description": "Käytä kiekkoja, joita käytät normaalisti vähiten. Valitse avauskiekko, lähestymiskiekko ja putteri, joita olet käyttänyt vähiten. Saat käyttää vain näitä kiekkoja väylällä."
+  },
+  {
+    "id": "c53",
+    "title": "Avaus heikommalla",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "✋",
+    "description": "Avaa ei-dominoivalla kädellä."
+  },
+  {
+    "id": "c54",
+    "title": "Tomahawk / overhand",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "🪓",
+    "description": "Avausheiton pitää olla tomahawk, thumber tai muu overhand-heitto."
+  },
+  {
+    "id": "c55",
+    "title": "Yksi kiekko, yksi mahdollisuus",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "🔒",
+    "description": "Valitse yksi kiekko ennen väylää. Et saa vaihtaa sitä koko väylällä."
+  },
+  {
+    "id": "c56",
+    "title": "Ei putteria",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "🚫",
+    "description": "Pelaa väylä ilman putteria, myös putit."
+  },
+  {
+    "id": "c57",
+    "title": "Kaverin paha valinta",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "😈",
+    "description": "Toinen pelaaja valitsee sinulle sekä kiekon että heittotyylin avaukseen."
+  },
+  {
+    "id": "c58",
+    "title": "Tasoituskierros",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "⚖️",
+    "description": "Väylä pelataan yhdellä kiekolla. Kiekon nopeus määräytyy käänteisesti edellisen väylän tulokseen: parhaiten pelannut käyttää hitainta kiekkoa ja heikoiten pelannut nopeinta kiekkoa. Tasapelit sovitaan yhdessä."
+  },
+  {
+    "id": "c59",
+    "title": "Takaa-ajajan etu",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "🏃",
+    "description": "Viimeisenä oleva saa valita yhdelle toiselle pelaajalle avauskiekon."
+  },
+  {
+    "id": "c60",
+    "title": "Täydellinen väylä",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "💎",
+    "description": "Haaste onnistuu vain, jos saat parin tai paremman ilman puuosumaa ja ilman OB:tä."
+  },
+  {
+    "id": "c61",
+    "title": "Sankariheitto",
+    "category": "Riski-level",
+    "difficulty": 3,
+    "icon": "🦸",
+    "description": "Valitse rohkea linja. Haaste onnistuu vain, jos kiekko päätyy selvästi parempaan paikkaan kuin turvallisella linjalla olisi päätynyt."
+  }
 ];
+
+const CARD_VERSION = 5;
 
 let state = loadState();
 let currentGame = null;
@@ -299,6 +802,13 @@ function uid(){ return Date.now().toString(36) + Math.random().toString(36).slic
 function clamp(n,min,max){ return Math.max(min, Math.min(max, Number(n))); }
 function escapeHtml(s){ return String(s ?? '').replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 function relText(n){ n=Number(n)||0; return n>0 ? '+'+n : String(n); }
+function difficultyNumber(d){ return clamp(Number(d) || 2, 1, 3); }
+function difficultyLabel(d){
+  const n=difficultyNumber(d);
+  if(n===1) return '1 Mummo-level';
+  if(n===2) return '2 Semipeluri-level';
+  return '3 Riski-level';
+}
 function loadState(){
   const raw = localStorage.getItem(STORAGE_KEY);
   if(raw){ try { const parsed=JSON.parse(raw); return migrateState(parsed); } catch(e){} }
@@ -311,12 +821,17 @@ function defaultState(){
       {id:uid(), name:'Mallikenttä 18 väylää', pars:[3,3,4,3,3,4,3,3,3,4,3,3,5,3,3,4,3,3]}
     ],
     cards: structuredClone(DEFAULT_CARDS),
+    cardVersion: CARD_VERSION,
     games:[]
   };
 }
 function migrateState(s){
   if(!s.courses) s.courses = defaultState().courses;
   if(!s.cards || !s.cards.length) s.cards = structuredClone(DEFAULT_CARDS);
+  if(s.cardVersion !== CARD_VERSION){
+    s.cards = structuredClone(DEFAULT_CARDS);
+    s.cardVersion = CARD_VERSION;
+  }
   if(!s.games) s.games = [];
   return s;
 }
@@ -367,7 +882,21 @@ function renderParInputs(){
   const oldValues=Array.from(box.querySelectorAll('input')).map(i=>i.value);
   box.innerHTML='';
   for(let i=1;i<=n;i++){
-    const inp=document.createElement('input'); inp.type='number'; inp.min='3'; inp.max='5'; inp.step='1'; inp.value=oldValues[i-1] || '3'; inp.id='par_'+i; inp.setAttribute('aria-label','Par '+i); box.appendChild(inp);
+    const item=document.createElement('div');
+    item.className='parInputItem';
+    const label=document.createElement('span');
+    label.textContent=i+'. par';
+    const inp=document.createElement('input');
+    inp.type='number';
+    inp.min='3';
+    inp.max='5';
+    inp.step='1';
+    inp.value=oldValues[i-1] || '3';
+    inp.id='par_'+i;
+    inp.setAttribute('aria-label','Väylä '+i+' par');
+    item.appendChild(label);
+    item.appendChild(inp);
+    box.appendChild(item);
   }
 }
 function fillDefaultPar(){ const val=document.getElementById('defaultPar').value; document.querySelectorAll('#parInputs input').forEach(i=>i.value=val); }
@@ -413,7 +942,7 @@ function renderCoursesList(){
 function saveCard(){
   const title=document.getElementById('cardTitleInput').value.trim();
   const category=document.getElementById('cardCategoryInput').value.trim() || 'Haaste';
-  const difficulty=clamp(document.getElementById('cardDifficultyInput').value || 2,1,5);
+  const difficulty=clamp(document.getElementById('cardDifficultyInput').value || 2,1,3);
   const icon=document.getElementById('cardIconInput').value.trim() || '🥏';
   const description=document.getElementById('cardDescriptionInput').value.trim();
   if(!title || !description) return alert('Anna kortille nimi ja kuvaus.');
@@ -427,7 +956,7 @@ function editCard(id){
   document.getElementById('editCardId').value=c.id;
   document.getElementById('cardTitleInput').value=c.title;
   document.getElementById('cardCategoryInput').value=c.category;
-  document.getElementById('cardDifficultyInput').value=String(c.difficulty);
+  document.getElementById('cardDifficultyInput').value=String(difficultyNumber(c.difficulty));
   document.getElementById('cardIconInput').value=c.icon || '🥏';
   document.getElementById('cardDescriptionInput').value=c.description;
   showTab('cards'); window.scrollTo({top:0, behavior:'smooth'});
@@ -442,16 +971,123 @@ function resetCardForm(){
 }
 function restoreDefaultCards(){
   if(!confirm('Palautetaanko oletuskortit? Tämä korvaa nykyisen korttipakan.')) return;
-  state.cards=structuredClone(DEFAULT_CARDS); saveState(); shuffleDeck(false); resetCardForm(); renderCardsList();
+  state.cards=structuredClone(DEFAULT_CARDS); state.cardVersion=CARD_VERSION; saveState(); shuffleDeck(false); resetCardForm(); renderCardsList();
 }
 function renderCardsList(){
   const box=document.getElementById('cardsList'); if(!box) return; box.innerHTML='';
   const sorted=[...state.cards].sort((a,b)=>a.difficulty-b.difficulty || a.title.localeCompare(b.title));
   sorted.forEach(c=>{
     const div=document.createElement('div'); div.className='card'; div.style.boxShadow='none';
-    div.innerHTML=`<span class="pill purple">Vaikeus ${c.difficulty}</span> <span class="pill">${escapeHtml(c.category)}</span><h3>${escapeHtml(c.icon || '🥏')} ${escapeHtml(c.title)}</h3><p class="muted">${escapeHtml(c.description)}</p><div class="row" style="margin-top:10px"><button class="smallbtn" onclick="editCard('${c.id}')">Muokkaa</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">Poista</button></div>`;
+    div.innerHTML=`<span class="pill purple">${difficultyLabel(c.difficulty)}</span> <span class="pill">${escapeHtml(c.category)}</span><h3>${escapeHtml(c.icon || '🥏')} ${escapeHtml(c.title)}</h3><p class="muted">${escapeHtml(c.description)}</p><div class="row" style="margin-top:10px"><button class="smallbtn" onclick="editCard('${c.id}')">Muokkaa</button><button class="smallbtn danger" onclick="deleteCard('${c.id}')">Poista</button></div>`;
     box.appendChild(div);
   });
+}
+
+
+function formatSignedLimit(value){
+  const n=Number(value);
+  if(!Number.isFinite(n)) return String(value ?? '');
+  return n > 0 ? '+' + n : String(n);
+}
+function minimumPossibleHoleTotal(playersCount, pars){
+  const maxPar = Math.max(...pars.map(Number));
+  return Number(playersCount) * (1 - maxPar);
+}
+function validateDifficultyLimits(rise, drop, playersCount, pars){
+  const minPossible = minimumPossibleHoleTotal(playersCount, pars);
+  if(!Number.isFinite(rise) || !Number.isFinite(drop)) return {ok:false, message:'Anna nousu- ja laskurajoihin numerot.'};
+  if(rise < minPossible) return {ok:false, message:`Nousuraja on liian pieni tälle pelaajamäärälle ja kentälle. Pienin realistinen arvo on ${formatSignedLimit(minPossible)}.`};
+  if(rise > 50 || drop > 50) return {ok:false, message:'Rajojen maksimi on +50.'};
+  if(rise >= drop) return {ok:false, message:'Nousurajan pitää olla pienempi kuin laskurajan, jotta sama tulos ei voi sekä nostaa että laskea leveliä.'};
+  return {ok:true};
+}
+function normalizeDifficultyLimits(rise, drop, changed, playersCount, pars){
+  const minPossible = minimumPossibleHoleTotal(playersCount, pars);
+  const maxLimit = 50;
+  const fallbackRise = 1;
+  const fallbackDrop = 5;
+  rise = Number(rise);
+  drop = Number(drop);
+  if(!Number.isFinite(rise)) rise = fallbackRise;
+  if(!Number.isFinite(drop)) drop = fallbackDrop;
+
+  // Nousurajan pitää mahtua vähintään yhden pykälän laskurajan alle.
+  // Siksi nousurajan suurin sallittu arvo on 49, kun laskurajan maksimi on 50.
+  if(changed === 'rise'){
+    rise = clamp(Math.round(rise), minPossible, maxLimit - 1);
+    drop = clamp(Math.round(drop), minPossible + 1, maxLimit);
+    if(drop <= rise) drop = Math.min(maxLimit, rise + 1);
+  } else if(changed === 'drop'){
+    drop = clamp(Math.round(drop), minPossible + 1, maxLimit);
+    rise = clamp(Math.round(rise), minPossible, maxLimit - 1);
+    if(rise >= drop) rise = Math.max(minPossible, drop - 1);
+  } else {
+    rise = clamp(Math.round(rise), minPossible, maxLimit - 1);
+    drop = clamp(Math.round(drop), minPossible + 1, maxLimit);
+    if(rise >= drop) drop = Math.min(maxLimit, rise + 1);
+    if(rise >= drop) rise = Math.max(minPossible, drop - 1);
+  }
+  return {rise, drop};
+}
+function getStartLimitContext(){
+  const course=state.courses.find(c=>c.id===document.getElementById('courseSelect').value) || state.courses[0];
+  const players=startPlayers.map(x=>String(x||'').trim()).filter(Boolean);
+  return {playersCount: Math.max(players.length, 1), pars: course ? course.pars : [3]};
+}
+function normalizeStartLimits(changed){
+  const riseEl=document.getElementById('riseLimit');
+  const dropEl=document.getElementById('dropLimit');
+  if(!riseEl || !dropEl) return;
+  const ctx=getStartLimitContext();
+  const limits=normalizeDifficultyLimits(riseEl.value, dropEl.value, changed, ctx.playersCount, ctx.pars);
+  riseEl.value=limits.rise;
+  dropEl.value=limits.drop;
+  updateStartLimitSummary();
+}
+function normalizeGameLimits(changed){
+  const riseEl=document.getElementById('gameRiseLimit');
+  const dropEl=document.getElementById('gameDropLimit');
+  if(!currentGame || !riseEl || !dropEl) return;
+  const limits=normalizeDifficultyLimits(riseEl.value, dropEl.value, changed, currentGame.players.length, currentGame.pars);
+  riseEl.value=limits.rise;
+  dropEl.value=limits.drop;
+}
+function updateStartLimitSummary(){
+  const riseEl=document.getElementById('riseLimit');
+  const dropEl=document.getElementById('dropLimit');
+  const riseText=document.getElementById('startRiseText');
+  const dropText=document.getElementById('startDropText');
+  if(riseEl && riseText) riseText.textContent=formatSignedLimit(riseEl.value || 0);
+  if(dropEl && dropText) dropText.textContent=formatSignedLimit(dropEl.value || 0);
+}
+function toggleStartLimitEditor(){
+  const editor=document.getElementById('startLimitEditor');
+  if(editor) editor.classList.toggle('hidden');
+}
+function applyStartLimitsFromInputs(){
+  normalizeStartLimits('both');
+  const course=state.courses.find(c=>c.id===document.getElementById('courseSelect').value) || state.courses[0];
+  const players=startPlayers.map(x=>String(x||'').trim()).filter(Boolean);
+  const rise=Number(document.getElementById('riseLimit').value || 1);
+  const drop=Number(document.getElementById('dropLimit').value || 5);
+  if(course){
+    const limitCheck=validateDifficultyLimits(rise, drop, Math.max(players.length, 1), course.pars);
+    if(!limitCheck.ok) return alert(limitCheck.message);
+  }
+  updateStartLimitSummary();
+  const editor=document.getElementById('startLimitEditor');
+  if(editor) editor.classList.add('hidden');
+}
+function updateGameLimitSummary(){
+  const riseText=document.getElementById('gameRiseText');
+  const dropText=document.getElementById('gameDropText');
+  if(!currentGame || !riseText || !dropText) return;
+  riseText.textContent=formatSignedLimit(currentGame.settings.riseLimit);
+  dropText.textContent=formatSignedLimit(currentGame.settings.dropLimit);
+}
+function toggleGameLimitEditor(){
+  const editor=document.getElementById('gameLimitEditor');
+  if(editor) editor.classList.toggle('hidden');
 }
 
 // Game logic
@@ -460,10 +1096,11 @@ function startGame(){
   const players=startPlayers.map(x=>String(x||'').trim()).filter(Boolean);
   if(!players.length) return alert('Lisää vähintään yksi pelaaja.');
   const course=state.courses.find(c=>c.id===document.getElementById('courseSelect').value) || state.courses[0];
-  const startDifficulty=clamp(document.getElementById('startDifficulty').value || 2,1,5);
+  const startDifficulty=clamp(document.getElementById('startDifficulty').value || 2,1,3);
   const riseLimit=Number(document.getElementById('riseLimit').value || 1);
   const dropLimit=Number(document.getElementById('dropLimit').value || 5);
-  if(riseLimit >= dropLimit) return alert('Nousurajan pitää olla pienempi kuin laskuraja. Esim. +1 ja +5.');
+  const limitCheck=validateDifficultyLimits(riseLimit, dropLimit, players.length, course.pars);
+  if(!limitCheck.ok) return alert(limitCheck.message);
   currentGame={
     id:uid(), date:document.getElementById('dateInput').value || today(),
     courseName:course.name, pars:[...course.pars],
@@ -472,7 +1109,7 @@ function startGame(){
     currentDifficulty:startDifficulty,
     holes:course.pars.map((par,i)=>({hole:i+1, par, difficulty:null, card:null, results:{}, groupTotal:null, difficultyAfter:null}))
   };
-  currentGame.holes.forEach(h=> currentGame.players.forEach(p=> h.results[p.id]={strokes:null, cardFail:false}));
+  currentGame.holes.forEach(h=> currentGame.players.forEach(p=> h.results[p.id]={strokes:null, cardResult:null}));
   currentHole=0;
   shuffleDeck(false);
   document.getElementById('startCard').classList.add('hidden');
@@ -486,10 +1123,11 @@ function renderGame(){
   document.getElementById('gameCourseName').textContent=currentGame.courseName;
   document.getElementById('holeTitle').textContent=`Väylä ${currentHole+1} / ${currentGame.pars.length}`;
   document.getElementById('holePar').textContent=hole.par;
-  document.getElementById('difficultyPill').textContent='Vaikeus '+hole.difficulty;
+  document.getElementById('difficultyPill').textContent=difficultyLabel(hole.difficulty);
   document.getElementById('currentDifficultyInput').value=String(currentGame.currentDifficulty);
   document.getElementById('gameRiseLimit').value=currentGame.settings.riseLimit;
   document.getElementById('gameDropLimit').value=currentGame.settings.dropLimit;
+  updateGameLimitSummary();
   renderChallengeCard(false);
   renderPlayerScores();
   renderHoleButtons();
@@ -503,10 +1141,10 @@ function renderChallengeCard(animated){
   box.classList.remove('drawn');
   box.classList.toggle('shuffling', false);
   if(hole.card){
-    box.innerHTML=`<span class="pill purple">Vaikeus ${hole.card.difficulty}</span><span class="pill">${escapeHtml(hole.card.category)}</span><div class="challengeIcon">${escapeHtml(hole.card.icon || '🥏')}</div><div class="challengeTitle">${escapeHtml(hole.card.title)}</div><p class="challengeDesc">${escapeHtml(hole.card.description)}</p><p class="muted" style="margin-top:12px">Onnistui = +0 · Epäonnistui = +1</p>`;
+    box.innerHTML=`<span class="pill purple">${difficultyLabel(hole.card.difficulty)}</span><span class="pill">${escapeHtml(hole.card.category)}</span><div class="challengeIcon">${escapeHtml(hole.card.icon || '🥏')}</div><div class="challengeTitle">${escapeHtml(hole.card.title)}</div><p class="challengeDesc">${escapeHtml(hole.card.description)}</p><p class="muted" style="margin-top:12px">Onnistui = +0 · Epäonnistui = +1</p>`;
     if(animated){ void box.offsetWidth; box.classList.add('drawn'); }
   } else {
-    box.innerHTML=`<p class="muted">Nosta kortti tälle väylälle.</p><div class="challengeIcon">🃏</div><div class="challengeTitle">Kortti odottaa</div><p class="challengeDesc">Kortti valitaan nykyisen vaikeustason mukaan.</p>`;
+    box.innerHTML=`<p class="muted">Nosta kortti tälle väylälle.</p><div class="challengeIcon">🃏</div><div class="challengeTitle">Kortti odottaa</div><p class="challengeDesc">Kortti valitaan nykyisen levelin mukaan.</p>`;
   }
 }
 function shuffleDeck(showMessage){
@@ -529,7 +1167,7 @@ function drawCardForCurrentHole(){
     if(allInDeck.length){
       const nearestDistance=Math.min(...allInDeck.map(c=>Math.abs(Number(c.difficulty)-Number(difficulty))));
       candidates=allInDeck.filter(c=>Math.abs(Number(c.difficulty)-Number(difficulty))===nearestDistance);
-      setDeckMessage(`Vaikeustasolla ${difficulty} ei ollut kortteja pakassa. Nostettiin lähin sopiva kortti.`);
+      setDeckMessage(`Levelillä ${difficultyLabel(difficulty)} ei ollut kortteja pakassa. Nostettiin lähin sopiva kortti.`);
     }
   } else setDeckMessage('');
   if(!candidates.length) return alert('Korttipakka on tyhjä. Lisää kortteja tai palauta oletuskortit.');
@@ -543,17 +1181,32 @@ function renderPlayerScores(){
   const box=document.getElementById('playerScores'); box.innerHTML='';
   const hole=currentGame.holes[currentHole];
   currentGame.players.forEach(p=>{
-    const res=hole.results[p.id] || {strokes:null, cardFail:false};
+    const res=hole.results[p.id] || {strokes:null, cardResult:null};
+    if(!('cardResult' in res)) res.cardResult = res.cardFail === true ? 'fail' : null;
     hole.results[p.id]=res;
-    const rel = res.strokes==null ? '–' : relText(Number(res.strokes)-Number(hole.par));
+    const hasStrokes = res.strokes != null;
+    const rel = hasStrokes ? relText(Number(res.strokes)-Number(hole.par)) : '–';
+    const strokesLabel = hasStrokes ? res.strokes : '–';
     const div=document.createElement('div'); div.className='playerLine';
     div.innerHTML=`
       <div><b>${escapeHtml(p.name)}</b><br><span class="muted">Väylätulos: ${rel}</span></div>
-      <div><label>Heitot</label><input type="number" min="1" value="${res.strokes ?? ''}" onchange="setPlayerStrokes('${p.id}', this.value)"></div>
-      <div><label>Kortti</label><div class="toggle"><button class="${!res.cardFail ? 'activeSuccess' : ''}" onclick="setCardFail('${p.id}', false)">Onnistui</button><button class="${res.cardFail ? 'activeFail' : ''}" onclick="setCardFail('${p.id}', true)">Epäonnistui</button></div></div>
+      <div><label>Heitot</label><div class="strokeControl"><button onclick="adjustPlayerStrokes('${p.id}', -1)">−</button><button class="strokeValue ${hasStrokes ? 'active' : ''}" onclick="setPlayerPar('${p.id}')">${strokesLabel}</button><button onclick="adjustPlayerStrokes('${p.id}', 1)">+</button></div></div>
+      <div><label>Kortti</label><div class="toggle"><button class="${res.cardResult === 'success' ? 'activeSuccess' : ''}" onclick="setCardResult('${p.id}', 'success')">Onnistui</button><button class="${res.cardResult === 'fail' ? 'activeFail' : ''}" onclick="setCardResult('${p.id}', 'fail')">Epäonnistui</button></div></div>
       <div class="center"><span class="muted">Yht.</span><br><b>${playerHoleTotal(hole,p.id)}</b></div>`;
     box.appendChild(div);
   });
+}
+function adjustPlayerStrokes(pid, delta){
+  const hole=currentGame.holes[currentHole];
+  const res=hole.results[pid];
+  if(res.strokes == null) res.strokes = Math.max(1, Number(hole.par) + Number(delta));
+  else res.strokes = Math.max(1, Number(res.strokes) + Number(delta));
+  renderGame();
+}
+function setPlayerPar(pid){
+  const hole=currentGame.holes[currentHole];
+  hole.results[pid].strokes = Number(hole.par);
+  renderGame();
 }
 function setPlayerStrokes(pid, value){
   const hole=currentGame.holes[currentHole];
@@ -561,9 +1214,20 @@ function setPlayerStrokes(pid, value){
   hole.results[pid].strokes=Number.isFinite(v) ? v : null;
   renderGame();
 }
-function setCardFail(pid, fail){ currentGame.holes[currentHole].results[pid].cardFail=!!fail; renderGame(); }
+function setCardResult(pid, result){
+  const res=currentGame.holes[currentHole].results[pid];
+  res.cardResult = result;
+  res.cardFail = result === 'fail'; // säilytetään yhteensopivuus vanhaan tallennusmuotoon
+  renderGame();
+}
+function getCardResult(res){
+  if(!res) return null;
+  if(res.cardResult === 'success' || res.cardResult === 'fail') return res.cardResult;
+  if(res.cardFail === true) return 'fail';
+  return null;
+}
 function playerHoleCourseRel(hole,pid){ const s=hole.results[pid]?.strokes; return s==null ? 0 : Number(s)-Number(hole.par); }
-function playerHoleCardPoints(hole,pid){ return hole.results[pid]?.cardFail ? 1 : 0; }
+function playerHoleCardPoints(hole,pid){ return getCardResult(hole.results[pid]) === 'fail' ? 1 : 0; }
 function playerHoleTotal(hole,pid){ return relText(playerHoleCourseRel(hole,pid)+playerHoleCardPoints(hole,pid)); }
 function holeGroupTotal(hole){
   return currentGame.players.reduce((acc,p)=> acc + playerHoleCourseRel(hole,p.id) + playerHoleCardPoints(hole,p.id), 0);
@@ -573,8 +1237,8 @@ function calculateNextDifficultyFromHole(hole){
   const current=Number(hole.difficulty || currentGame.currentDifficulty);
   const rise=Number(currentGame.settings.riseLimit);
   const drop=Number(currentGame.settings.dropLimit);
-  if(total <= rise) return clamp(current+1,1,5);
-  if(total >= drop) return clamp(current-1,1,5);
+  if(total <= rise) return clamp(current+1,1,3);
+  if(total >= drop) return clamp(current-1,1,3);
   return current;
 }
 function updateNextDifficultyHint(){
@@ -585,16 +1249,29 @@ function updateNextDifficultyHint(){
   let action='pysyy samana';
   if(next > Number(hole.difficulty)) action='nousee';
   if(next < Number(hole.difficulty)) action='laskee';
-  document.getElementById('nextDifficultyHint').textContent=`Tämän väylän yhteistulos nyt ${relText(total)} → seuraavan väylän vaikeus ${action} tasolle ${next}.`;
+  document.getElementById('nextDifficultyHint').textContent=`Tämän väylän yhteistulos nyt ${relText(total)} → seuraavan väylän level ${action}: ${difficultyLabel(next)}.`;
 }
 function updateGameSettings(){
+  normalizeGameLimits('both');
   const rise=Number(document.getElementById('gameRiseLimit').value || 1);
   const drop=Number(document.getElementById('gameDropLimit').value || 5);
-  if(rise>=drop){ alert('Nousurajan pitää olla pienempi kuin laskuraja.'); renderGame(); return; }
-  currentGame.settings.riseLimit=rise; currentGame.settings.dropLimit=drop; renderGame();
+  const limitCheck=validateDifficultyLimits(rise, drop, currentGame.players.length, currentGame.pars);
+  if(!limitCheck.ok){
+    alert(limitCheck.message);
+    document.getElementById('gameRiseLimit').value=currentGame.settings.riseLimit;
+    document.getElementById('gameDropLimit').value=currentGame.settings.dropLimit;
+    updateGameLimitSummary();
+    return;
+  }
+  currentGame.settings.riseLimit=rise;
+  currentGame.settings.dropLimit=drop;
+  updateGameLimitSummary();
+  const editor=document.getElementById('gameLimitEditor');
+  if(editor) editor.classList.add('hidden');
+  renderGame();
 }
 function updateCurrentDifficultyFromInput(){
-  const d=clamp(document.getElementById('currentDifficultyInput').value || 2,1,5);
+  const d=clamp(document.getElementById('currentDifficultyInput').value || 2,1,3);
   currentGame.currentDifficulty=d;
   const hole=currentGame.holes[currentHole];
   hole.difficulty=d;
@@ -606,6 +1283,8 @@ function finishHoleAndNext(){
   if(!hole.card && !confirm('Tälle väylälle ei ole nostettu korttia. Jatketaanko silti?')) return;
   const empty=currentGame.players.filter(p=>hole.results[p.id].strokes==null).length;
   if(empty && !confirm(`${empty} pelaajalta puuttuu heittotulos. Jatketaanko?`)) return;
+  const missingCardResults = hole.card ? currentGame.players.filter(p=>getCardResult(hole.results[p.id])==null).length : 0;
+  if(missingCardResults && !confirm(`${missingCardResults} pelaajalta puuttuu kortin onnistui/epäonnistui-merkintä. Jatketaanko?`)) return;
   hole.groupTotal=holeGroupTotal(hole);
   hole.difficultyAfter=calculateNextDifficultyFromHole(hole);
   currentGame.currentDifficulty=hole.difficultyAfter;
@@ -628,7 +1307,7 @@ function renderHoleButtons(){
 function gameTotals(game=currentGame){
   const playerTotals=game.players.map(p=>{
     let course=0, cards=0;
-    game.holes.forEach(h=>{ course += (h.results[p.id]?.strokes==null ? 0 : Number(h.results[p.id].strokes)-Number(h.par)); cards += h.results[p.id]?.cardFail ? 1 : 0; });
+    game.holes.forEach(h=>{ course += (h.results[p.id]?.strokes==null ? 0 : Number(h.results[p.id].strokes)-Number(h.par)); cards += getCardResult(h.results[p.id]) === 'fail' ? 1 : 0; });
     return {id:p.id, name:p.name, course, cards, total:course+cards};
   });
   return playerTotals;
@@ -645,6 +1324,8 @@ function saveGame(){
   if(!currentGame) return;
   const missing=currentGame.holes.reduce((acc,h)=> acc + currentGame.players.filter(p=>h.results[p.id].strokes==null).length,0);
   if(missing && !confirm(`Tallennetaanko peli? ${missing} pelaajaväylältä puuttuu heittotulos.`)) return;
+  const missingCards=currentGame.holes.reduce((acc,h)=> acc + (h.card ? currentGame.players.filter(p=>getCardResult(h.results[p.id])==null).length : 0),0);
+  if(missingCards && !confirm(`Tallennetaanko peli? ${missingCards} korttimerkintää puuttuu.`)) return;
   currentGame.savedAt=new Date().toISOString();
   state.games.push(clone(currentGame)); saveState();
   currentGame=null;
@@ -663,18 +1344,123 @@ function renderHistory(){
   [...state.games].reverse().forEach(g=>{
     const totals=gameTotals(g).sort((a,b)=>a.total-b.total);
     const winner=totals[0];
+    const detailId='history_detail_'+g.id;
+    const buttonId='history_btn_'+g.id;
     const div=document.createElement('div'); div.className='card'; div.style.boxShadow='none';
-    div.innerHTML=`<b>${escapeHtml(g.date)} · ${escapeHtml(g.courseName)}</b><br><span class="pill good">Voittaja: ${escapeHtml(winner.name)} ${relText(winner.total)}</span><div style="margin-top:10px; overflow:auto"><table><thead><tr><th>Pelaaja</th><th>Rata</th><th>Kortit</th><th>Yht.</th></tr></thead><tbody>${totals.map(t=>`<tr><td>${escapeHtml(t.name)}</td><td>${relText(t.course)}</td><td>${relText(t.cards)}</td><td><b>${relText(t.total)}</b></td></tr>`).join('')}</tbody></table></div><button class="smallbtn danger" style="margin-top:10px" onclick="deleteGame('${g.id}')">Poista</button>`;
+    div.innerHTML=`
+      <b>${escapeHtml(g.date)} · ${escapeHtml(g.courseName)}</b><br>
+      <span class="pill good">Voittaja: ${escapeHtml(winner.name)} ${relText(winner.total)}</span>
+      <div class="navrow" style="margin-top:10px">
+        <button id="${buttonId}" class="smallbtn" onclick="toggleHistoryDetails('${g.id}')">Näytä enemmän</button>
+        <button class="smallbtn danger" onclick="deleteGame('${g.id}')">Poista</button>
+      </div>
+      <div id="${detailId}" class="hidden" style="margin-top:12px">
+        ${historyDetailsHtml(g, totals)}
+      </div>`;
     box.appendChild(div);
   });
 }
+function toggleHistoryDetails(gameId){
+  const detail=document.getElementById('history_detail_'+gameId);
+  const btn=document.getElementById('history_btn_'+gameId);
+  if(!detail) return;
+  const shouldShow=detail.classList.contains('hidden');
+  detail.classList.toggle('hidden', !shouldShow);
+  if(btn) btn.textContent=shouldShow ? 'Piilota' : 'Näytä enemmän';
+}
+function historyDetailsHtml(g, totals){
+  const rankingRows=totals.map((t,i)=>`<tr><td>${i+1}.</td><td>${escapeHtml(t.name)}</td><td>${relText(t.course)}</td><td>${relText(t.cards)}</td><td><b>${relText(t.total)}</b></td></tr>`).join('');
+  const holeBlocks=g.holes.map((h,i)=>historyHoleBlockHtml(g,h,i)).join('');
+  return `
+    <h3>Sijoitustaulukko</h3>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>Sija</th><th>Pelaaja</th><th>Rata</th><th>Kortit</th><th>Yht.</th></tr></thead>
+        <tbody>${rankingRows}</tbody>
+      </table>
+    </div>
+    <h3 style="margin-top:16px">Väyläkohtaiset tulokset</h3>
+    ${holeBlocks}`;
+}
+function historyHoleBlockHtml(g,h,i){
+  const cardLabel=h.card ? `<span class="pill purple">${escapeHtml(h.card.title)}</span>` : '<span class="pill">Ei korttia</span>';
+  const groupTotal=historyHoleGroupTotal(g,h);
+  const nextDifficulty=historyNextDifficulty(g,h);
+  const rows=g.players.map(p=>{
+    const course=historyPlayerCourseRel(h,p.id);
+    const cardPoints=historyPlayerCardPoints(h,p.id);
+    const total=historyPlayerTotal(h,p.id);
+    const strokes=h.results?.[p.id]?.strokes ?? null;
+    return `<tr>
+      <td>${escapeHtml(p.name)}</td>
+      <td>${strokes ?? '–'}</td>
+      <td>${formatRelMaybe(course)}</td>
+      <td>${historyCardResultText(h,p.id)}</td>
+      <td><b>${formatRelMaybe(total)}</b></td>
+    </tr>`;
+  }).join('');
+  return `
+    <div class="card" style="box-shadow:none; background:#f8fafc; margin:10px 0; padding:12px">
+      <b>Väylä ${i+1}</b> · Par ${h.par} · Level ${h.difficulty == null ? '–' : difficultyLabel(h.difficulty)}<br>
+      ${cardLabel}
+      <span class="pill">Yhteistulos ${relText(groupTotal)}</span>
+      <span class="pill">Seuraava level ${difficultyLabel(nextDifficulty)}</span>
+      <div style="overflow:auto; margin-top:8px">
+        <table>
+          <thead><tr><th>Pelaaja</th><th>Heitot</th><th>Rata</th><th>Kortti</th><th>Yht.</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+function historyPlayerCourseRel(h,pid){
+  const s=h?.results?.[pid]?.strokes;
+  return s==null ? null : Number(s)-Number(h.par);
+}
+function historyPlayerCardPoints(h,pid){
+  const res=getCardResult(h?.results?.[pid]);
+  if(res === 'fail') return 1;
+  if(res === 'success') return 0;
+  return null;
+}
+function historyPlayerTotal(h,pid){
+  const course=historyPlayerCourseRel(h,pid);
+  const cards=historyPlayerCardPoints(h,pid);
+  if(course==null && cards==null) return null;
+  return (course ?? 0) + (cards ?? 0);
+}
+function historyCardResultText(h,pid){
+  if(!h.card) return 'Ei korttia';
+  const res=getCardResult(h?.results?.[pid]);
+  if(res === 'success') return 'Onnistui 0';
+  if(res === 'fail') return 'Epäonnistui +1';
+  return '–';
+}
+function historyHoleGroupTotal(g,h){
+  return g.players.reduce((acc,p)=>{
+    const course=historyPlayerCourseRel(h,p.id);
+    const cards=historyPlayerCardPoints(h,p.id);
+    return acc + (course ?? 0) + (cards ?? 0);
+  },0);
+}
+function historyNextDifficulty(g,h){
+  if(h.difficultyAfter != null) return Number(h.difficultyAfter);
+  const current=Number(h.difficulty || g.settings?.startDifficulty || 2);
+  const total=historyHoleGroupTotal(g,h);
+  const rise=Number(g.settings?.riseLimit ?? 1);
+  const drop=Number(g.settings?.dropLimit ?? 5);
+  if(total <= rise) return clamp(current+1,1,3);
+  if(total >= drop) return clamp(current-1,1,3);
+  return current;
+}
+function formatRelMaybe(v){ return v==null ? '–' : relText(v); }
 function deleteGame(id){ if(confirm('Poistetaanko peli historiasta?')){ state.games=state.games.filter(g=>g.id!==id); saveState(); renderHistory(); } }
 function csvRows(){
-  const rows=[['pvm','kentta','pelaaja','rata_pisteet','korttipisteet','yhteensa','vaikeus_alku','nousuraja','laskuraja',...Array.from({length:18},(_,i)=>'v'+(i+1)+'_heitot'),...Array.from({length:18},(_,i)=>'v'+(i+1)+'_kortti_epaonnistui')]];
+  const rows=[['pvm','kentta','pelaaja','rata_pisteet','korttipisteet','yhteensa','aloituslevel','nousuraja','laskuraja',...Array.from({length:18},(_,i)=>'v'+(i+1)+'_heitot'),...Array.from({length:18},(_,i)=>'v'+(i+1)+'_kortti_epaonnistui')]];
   state.games.forEach(g=>{
     gameTotals(g).forEach(t=>{
       const strokes=[]; const fails=[];
-      for(let i=0;i<18;i++){ const h=g.holes[i]; strokes.push(h?.results[t.id]?.strokes ?? ''); fails.push(h?.results[t.id]?.cardFail ? 1 : 0); }
+      for(let i=0;i<18;i++){ const h=g.holes[i]; strokes.push(h?.results[t.id]?.strokes ?? ''); fails.push(getCardResult(h?.results[t.id]) === 'fail' ? 1 : (getCardResult(h?.results[t.id]) === 'success' ? 0 : '')); }
       rows.push([g.date,g.courseName,t.name,t.course,t.cards,t.total,g.settings.startDifficulty,g.settings.riseLimit,g.settings.dropLimit,...strokes,...fails]);
     });
   });
@@ -691,7 +1477,7 @@ function sum(arr){ return arr.reduce((a,b)=>a+Number(b||0),0); }
 
 // Init
 document.getElementById('dateInput').value=today();
-renderParInputs(); fillDefaultPar(); shuffleDeck(false); refreshAll(); updateFooterVisibility();
+renderParInputs(); fillDefaultPar(); shuffleDeck(false); refreshAll(); updateStartLimitSummary(); updateFooterVisibility();
 </script>
 </body>
 </html>
