@@ -66,6 +66,12 @@
     .strokeControl button { padding:10px 8px; min-height:46px; }
     .strokeValue { background:#e5e7eb; color:var(--text); border:2px solid transparent; border-radius:14px; font-size:18px; font-weight:800; }
     .strokeValue.active { background:#eef2ff; color:#1d4ed8; border-color:var(--accent); }
+    .numberStepper { display:grid; grid-template-columns:48px minmax(56px,1fr) 48px; gap:6px; align-items:center; }
+    .numberStepper button { padding:10px 8px; min-height:46px; font-size:18px; }
+    .numberStepper .valueBox { display:flex; align-items:center; justify-content:center; min-height:46px; background:#fff; border:2px solid #bfdbfe; border-radius:14px; font-size:18px; font-weight:800; color:#1d4ed8; }
+    .numberStepper.compact { grid-template-columns:40px 48px 40px; gap:5px; }
+    .numberStepper.compact button { min-height:42px; padding:8px 6px; font-size:17px; }
+    .numberStepper.compact .valueBox { min-height:42px; font-size:17px; }
     .settingsSummary { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; background:#f8fafc; border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:10px; }
     .settingsSummary button { padding:10px 12px; font-size:14px; }
     .settingsEditor { background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:10px; }
@@ -93,15 +99,12 @@
     .holelist { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px; }
     .holelist button { font-size:13px; padding:8px; font-weight:600; }
 
-    #parInputs.holelist { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-    .parInputItem { display:flex; align-items:center; justify-content:space-between; gap:8px; border:1px solid var(--line); border-radius:12px; padding:8px 10px; background:#fff; min-height:58px; overflow:hidden; }
-    .parInputItem span { color:var(--muted); font-weight:800; font-size:13px; white-space:nowrap; line-height:1; flex:1 1 auto; min-width:0; }
-    .parInputItem input { width:58px; flex:0 0 58px; border:1px solid var(--line); border-radius:10px; padding:8px 4px; text-align:center; font-size:16px; font-weight:800; background:#fff; min-width:0; }
-    .parInputItem input:focus { outline:2px solid #bfdbfe; border-color:#93c5fd; }
-    @media (max-width:520px){
-      #parInputs.holelist { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .parInputItem { padding:8px 10px; }
-      .parInputItem input { width:56px; flex-basis:56px; }
+    #parInputs.holelist { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .parInputItem { display:grid; grid-template-columns:62px 1fr; align-items:center; gap:8px; border:1px solid var(--line); border-radius:12px; padding:8px 10px; background:#fff; min-height:58px; overflow:hidden; }
+    .parInputItem .parLabel { color:var(--muted); font-weight:800; font-size:13px; white-space:nowrap; line-height:1.1; }
+    @media (max-width:420px){
+      #parInputs.holelist { grid-template-columns:1fr; }
+      .parInputItem { grid-template-columns:70px 1fr; }
     }
     table { width:100%; border-collapse:collapse; font-size:14px; }
     th, td { border-bottom:1px solid var(--line); padding:9px 6px; text-align:left; vertical-align:top; }
@@ -157,8 +160,24 @@
         </div>
         <div id="startLimitEditor" class="settingsEditor hidden">
           <div class="row">
-            <div><label>Nousuraja</label><input type="number" id="riseLimit" value="1" onchange="normalizeStartLimits('rise')"></div>
-            <div><label>Laskuraja</label><input type="number" id="dropLimit" value="5" onchange="normalizeStartLimits('drop')"></div>
+            <div>
+              <label>Nousuraja</label>
+              <input type="hidden" id="riseLimit" value="1">
+              <div class="numberStepper">
+                <button type="button" onclick="adjustStartLimit('rise', -1)">−</button>
+                <span class="valueBox" id="riseLimitDisplay">+1</span>
+                <button type="button" onclick="adjustStartLimit('rise', 1)">+</button>
+              </div>
+            </div>
+            <div>
+              <label>Laskuraja</label>
+              <input type="hidden" id="dropLimit" value="5">
+              <div class="numberStepper">
+                <button type="button" onclick="adjustStartLimit('drop', -1)">−</button>
+                <span class="valueBox" id="dropLimitDisplay">+5</span>
+                <button type="button" onclick="adjustStartLimit('drop', 1)">+</button>
+              </div>
+            </div>
           </div>
           <p class="muted">Sääntö: väylän yhteistulos ≤ nousuraja nostaa leveliä. Väylän yhteistulos ≥ laskuraja laskee leveliä. Rajat korjataan automaattisesti niin, että nousuraja on aina pienempi kuin laskuraja.</p>
           <button type="button" class="primary" style="width:100%" onclick="applyStartLimitsFromInputs()">Tallenna rajat</button>
@@ -210,8 +229,24 @@
         <div id="gameLimitEditor" class="settingsEditor hidden">
           <div class="row3">
             <div><label>Nykyinen level</label><select id="currentDifficultyInput" onchange="updateCurrentDifficultyFromInput()"><option value="1">1 Mummo</option><option value="2">2 Semipeluri</option><option value="3">3 Riski</option></select></div>
-            <div><label>Nousuraja</label><input type="number" id="gameRiseLimit" onchange="normalizeGameLimits('rise')"></div>
-            <div><label>Laskuraja</label><input type="number" id="gameDropLimit" onchange="normalizeGameLimits('drop')"></div>
+            <div>
+              <label>Nousuraja</label>
+              <input type="hidden" id="gameRiseLimit">
+              <div class="numberStepper">
+                <button type="button" onclick="adjustGameLimit('rise', -1)">−</button>
+                <span class="valueBox" id="gameRiseLimitDisplay">+1</span>
+                <button type="button" onclick="adjustGameLimit('rise', 1)">+</button>
+              </div>
+            </div>
+            <div>
+              <label>Laskuraja</label>
+              <input type="hidden" id="gameDropLimit">
+              <div class="numberStepper">
+                <button type="button" onclick="adjustGameLimit('drop', -1)">−</button>
+                <span class="valueBox" id="gameDropLimitDisplay">+5</span>
+                <button type="button" onclick="adjustGameLimit('drop', 1)">+</button>
+              </div>
+            </div>
           </div>
           <button type="button" class="primary" style="width:100%; margin-top:10px" onclick="updateGameSettings()">Tallenna rajat</button>
         </div>
@@ -879,27 +914,41 @@ function removeStartPlayer(i){ if(startPlayers.length<=1) return alert('Tarvitaa
 function renderParInputs(){
   const n=Number(document.getElementById('holesCount')?.value || 18);
   const box=document.getElementById('parInputs'); if(!box) return;
-  const oldValues=Array.from(box.querySelectorAll('input')).map(i=>i.value);
+  const oldValues=Array.from(box.querySelectorAll('input[type="hidden"]')).map(i=>i.value);
+  const defaultPar=Number(document.getElementById('defaultPar')?.value || 3);
   box.innerHTML='';
   for(let i=1;i<=n;i++){
+    const value=clamp(oldValues[i-1] || defaultPar,3,5);
     const item=document.createElement('div');
     item.className='parInputItem';
-    const label=document.createElement('span');
-    label.textContent=i+'. par';
-    const inp=document.createElement('input');
-    inp.type='number';
-    inp.min='3';
-    inp.max='5';
-    inp.step='1';
-    inp.value=oldValues[i-1] || '3';
-    inp.id='par_'+i;
-    inp.setAttribute('aria-label','Väylä '+i+' par');
-    item.appendChild(label);
-    item.appendChild(inp);
+    item.innerHTML=`
+      <span class="parLabel">${i}. par</span>
+      <input type="hidden" id="par_${i}" value="${value}">
+      <div class="numberStepper compact" aria-label="Väylä ${i} par">
+        <button type="button" onclick="adjustParValue(${i}, -1)">−</button>
+        <span class="valueBox" id="parDisplay_${i}">${value}</span>
+        <button type="button" onclick="adjustParValue(${i}, 1)">+</button>
+      </div>`;
     box.appendChild(item);
   }
 }
-function fillDefaultPar(){ const val=document.getElementById('defaultPar').value; document.querySelectorAll('#parInputs input').forEach(i=>i.value=val); }
+function setParValue(index, value){
+  const v=clamp(value,3,5);
+  const input=document.getElementById('par_'+index);
+  const display=document.getElementById('parDisplay_'+index);
+  if(input) input.value=v;
+  if(display) display.textContent=v;
+}
+function adjustParValue(index, delta){
+  const input=document.getElementById('par_'+index);
+  const current=Number(input?.value || 3);
+  setParValue(index, current + Number(delta));
+}
+function fillDefaultPar(){
+  const val=clamp(document.getElementById('defaultPar').value || 3,3,5);
+  const n=Number(document.getElementById('holesCount')?.value || 18);
+  for(let i=1;i<=n;i++) setParValue(i,val);
+}
 function saveCourse(){
   const name=document.getElementById('courseNameInput').value.trim();
   if(!name) return alert('Anna kentän nimi.');
@@ -917,7 +966,7 @@ function editCourse(id){
   document.getElementById('courseNameInput').value=c.name;
   document.getElementById('holesCount').value=String(c.pars.length);
   renderParInputs();
-  c.pars.forEach((p,i)=>{ const el=document.getElementById('par_'+(i+1)); if(el) el.value=p; });
+  c.pars.forEach((p,i)=>setParValue(i+1,p));
   showTab('courses'); window.scrollTo({top:0, behavior:'smooth'});
 }
 function deleteCourse(id){
@@ -1051,14 +1100,33 @@ function normalizeGameLimits(changed){
   const limits=normalizeDifficultyLimits(riseEl.value, dropEl.value, changed, currentGame.players.length, currentGame.pars);
   riseEl.value=limits.rise;
   dropEl.value=limits.drop;
+  updateGameLimitControls();
+}
+function adjustStartLimit(which, delta){
+  const id=which === 'rise' ? 'riseLimit' : 'dropLimit';
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.value=Number(el.value || 0) + Number(delta);
+  normalizeStartLimits(which);
+}
+function adjustGameLimit(which, delta){
+  const id=which === 'rise' ? 'gameRiseLimit' : 'gameDropLimit';
+  const el=document.getElementById(id);
+  if(!el || !currentGame) return;
+  el.value=Number(el.value || 0) + Number(delta);
+  normalizeGameLimits(which);
 }
 function updateStartLimitSummary(){
   const riseEl=document.getElementById('riseLimit');
   const dropEl=document.getElementById('dropLimit');
   const riseText=document.getElementById('startRiseText');
   const dropText=document.getElementById('startDropText');
+  const riseDisplay=document.getElementById('riseLimitDisplay');
+  const dropDisplay=document.getElementById('dropLimitDisplay');
   if(riseEl && riseText) riseText.textContent=formatSignedLimit(riseEl.value || 0);
   if(dropEl && dropText) dropText.textContent=formatSignedLimit(dropEl.value || 0);
+  if(riseEl && riseDisplay) riseDisplay.textContent=formatSignedLimit(riseEl.value || 0);
+  if(dropEl && dropDisplay) dropDisplay.textContent=formatSignedLimit(dropEl.value || 0);
 }
 function toggleStartLimitEditor(){
   const editor=document.getElementById('startLimitEditor');
@@ -1078,12 +1146,25 @@ function applyStartLimitsFromInputs(){
   const editor=document.getElementById('startLimitEditor');
   if(editor) editor.classList.add('hidden');
 }
+function updateGameLimitControls(){
+  const riseEl=document.getElementById('gameRiseLimit');
+  const dropEl=document.getElementById('gameDropLimit');
+  const riseDisplay=document.getElementById('gameRiseLimitDisplay');
+  const dropDisplay=document.getElementById('gameDropLimitDisplay');
+  if(riseEl && riseDisplay) riseDisplay.textContent=formatSignedLimit(riseEl.value || 0);
+  if(dropEl && dropDisplay) dropDisplay.textContent=formatSignedLimit(dropEl.value || 0);
+}
 function updateGameLimitSummary(){
   const riseText=document.getElementById('gameRiseText');
   const dropText=document.getElementById('gameDropText');
   if(!currentGame || !riseText || !dropText) return;
   riseText.textContent=formatSignedLimit(currentGame.settings.riseLimit);
   dropText.textContent=formatSignedLimit(currentGame.settings.dropLimit);
+  const riseEl=document.getElementById('gameRiseLimit');
+  const dropEl=document.getElementById('gameDropLimit');
+  if(riseEl) riseEl.value=currentGame.settings.riseLimit;
+  if(dropEl) dropEl.value=currentGame.settings.dropLimit;
+  updateGameLimitControls();
 }
 function toggleGameLimitEditor(){
   const editor=document.getElementById('gameLimitEditor');
@@ -1128,6 +1209,7 @@ function renderGame(){
   document.getElementById('gameRiseLimit').value=currentGame.settings.riseLimit;
   document.getElementById('gameDropLimit').value=currentGame.settings.dropLimit;
   updateGameLimitSummary();
+  updateGameLimitControls();
   renderChallengeCard(false);
   renderPlayerScores();
   renderHoleButtons();
@@ -1261,6 +1343,7 @@ function updateGameSettings(){
     document.getElementById('gameRiseLimit').value=currentGame.settings.riseLimit;
     document.getElementById('gameDropLimit').value=currentGame.settings.dropLimit;
     updateGameLimitSummary();
+    updateGameLimitControls();
     return;
   }
   currentGame.settings.riseLimit=rise;
